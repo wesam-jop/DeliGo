@@ -1,0 +1,295 @@
+import React, { useState } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import Layout from '../Layout';
+import { useTranslation } from '../../hooks/useTranslation';
+import ProductCard from '../../Components/ProductCard';
+import AppDownloadSection from '../../Components/AppDownloadSection';
+import { 
+    Plus, 
+    Minus, 
+    ShoppingCart, 
+    Search,
+    Package,
+    Apple,
+    Utensils,
+    Milk,
+    Coffee,
+    Cookie,
+    Sparkles,
+    Heart,
+    Baby,
+    Shirt,
+    Home,
+    Wine,
+    DollarSign
+} from 'lucide-react';
+
+export default function ProductsIndex({ products, categories, filters }) {
+    const { t } = useTranslation();
+    
+    // حماية من البيانات غير المحددة
+    const safeFilters = filters || {};
+    const safeProducts = products || { data: [], total: 0, links: [] };
+    const safeCategories = categories || [];
+
+    const [search, setSearch] = useState(() => safeFilters?.search || '');
+    const [selectedCategory, setSelectedCategory] = useState(() => safeFilters?.category || '');
+    const [sortBy, setSortBy] = useState(() => safeFilters?.sort || 'sort_order');
+    const [sortDirection, setSortDirection] = useState(() => safeFilters?.direction || 'asc');
+
+    // دالة لتحويل أسماء الفئات إلى أيقونات
+    const getCategoryIcon = (categoryName) => {
+        const iconMap = {
+            'grocery': <Package className="w-4 h-4" />,
+            'fruits_vegetables': <Apple className="w-4 h-4" />,
+            'meat_fish': <Utensils className="w-4 h-4" />,
+            'dairy': <Milk className="w-4 h-4" />,
+            'beverages': <Coffee className="w-4 h-4" />,
+            'sweets': <Cookie className="w-4 h-4" />,
+            'cleaning': <Sparkles className="w-4 h-4" />,
+            'personal_care': <Heart className="w-4 h-4" />,
+            'baby_supplies': <Baby className="w-4 h-4" />,
+            'clothing': <Shirt className="w-4 h-4" />,
+            'home_garden': <Home className="w-4 h-4" />,
+            'alcohol': <Wine className="w-4 h-4" />,
+        };
+        return iconMap[categoryName] || <Package className="w-4 h-4" />;
+    };
+
+    // دوال إدارة السلة
+    const addToCart = (productId) => {
+        router.post('/cart/add', {
+            product_id: productId,
+            quantity: 1
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const updateCartQuantity = (productId, quantity) => {
+        if (quantity <= 0) {
+            router.delete(`/cart/remove/${productId}`, {
+                preserveState: true,
+                preserveScroll: true,
+            });
+        } else {
+            router.post('/cart/update', {
+                product_id: productId,
+                quantity: quantity
+            }, {
+                preserveState: true,
+                preserveScroll: true,
+            });
+        }
+    };
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        router.get('/products', {
+            search,
+            category: selectedCategory,
+            sort: sortBy,
+            direction: sortDirection,
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const handleCategoryChange = (categoryId) => {
+        setSelectedCategory(categoryId);
+        router.get('/products', {
+            search,
+            category: categoryId,
+            sort: sortBy,
+            direction: sortDirection,
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const handleSortChange = (newSortBy) => {
+        const newDirection = sortBy === newSortBy && sortDirection === 'asc' ? 'desc' : 'asc';
+        setSortBy(newSortBy);
+        setSortDirection(newDirection);
+        router.get('/products', {
+            search,
+            category: selectedCategory,
+            sort: newSortBy,
+            direction: newDirection,
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    return (
+        <Layout>
+            <Head title={t('products')} />
+            
+            <div className="min-h-screen bg-slate-50">
+                {/* Header */}
+                <div className="bg-white shadow-sm border-b">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                        <h1 className="text-2xl font-bold text-slate-900">{t('products')}</h1>
+                        <p className="text-slate-600 mt-1">{t('browse_all_products')}</p>
+                    </div>
+                </div>
+
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <div className="flex flex-col lg:flex-row gap-6">
+                        {/* Sidebar - Filters */}
+                        <div className="lg:w-1/4">
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <h3 className="text-lg font-semibold text-slate-900 mb-4">{t('search_filter')}</h3>
+                                
+                                {/* Search */}
+                                <form onSubmit={handleSearch} className="mb-6">
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            placeholder={t('search_products')}
+                                            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Search className="h-5 w-5 text-slate-400" />
+                                        </div>
+                                    </div>
+                                </form>
+
+                                {/* Categories */}
+                                <div className="mb-6">
+                                    <h4 className="font-medium text-slate-900 mb-3 flex items-center gap-2">
+                                        <Package className="w-4 h-4 text-purple-600" />
+                                        {t('categories')}
+                                    </h4>
+                                    <div className="space-y-2">
+                                        <button
+                                            onClick={() => handleCategoryChange('')}
+                                            className={`w-full px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                selectedCategory === '' 
+                                                    ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                                                    : 'text-slate-600 hover:bg-slate-100 border border-transparent'
+                                            }`}
+                                        >
+                                            <span className="flex items-center gap-2">
+                                                <Package className="w-4 h-4" />
+                                                {t('all_categories')}
+                                            </span>
+                                            <span className="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded-full">
+                                                {safeProducts.total}
+                                            </span>
+                                        </button>
+                                        {safeCategories.map((category) => (
+                                            <button
+                                                key={category.id}
+                                                onClick={() => handleCategoryChange(category.id)}
+                                                className={`w-full px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                    selectedCategory == category.id 
+                                                        ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                                                        : 'text-slate-600 hover:bg-slate-100 border border-transparent'
+                                                }`}
+                                            >
+                                                <span className="flex items-center gap-2">
+                                                    <span className="text-purple-600">
+                                                        {getCategoryIcon(category.name)}
+                                                    </span>
+                                                    {category.name}
+                                                </span>
+                                                <span className="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded-full">
+                                                    {category.products_count}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Sort */}
+                                <div>
+                                    <h4 className="font-medium text-slate-900 mb-3 flex items-center gap-2">
+                                        <DollarSign className="w-4 h-4 text-purple-600" />
+                                        {t('sort_by')}
+                                    </h4>
+                                    <div className="space-y-2">
+                                        {[
+                                            { value: 'sort_order', label: t('default_sort') },
+                                            { value: 'name', label: t('sort_by_name') },
+                                            { value: 'price', label: t('sort_by_price') },
+                                        ].map((option) => (
+                                            <button
+                                                key={option.value}
+                                                onClick={() => handleSortChange(option.value)}
+                                                className={`w-full px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                    sortBy === option.value 
+                                                        ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                                                        : 'text-slate-600 hover:bg-slate-100 border border-transparent'
+                                                }`}
+                                            >
+                                                <span>{option.label}</span>
+                                                {sortBy === option.value && (
+                                                    <span className="text-purple-600">
+                                                        {sortDirection === 'asc' ? '↑' : '↓'}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Products Grid */}
+                        <div className="lg:w-3/4">
+                            <div className="mb-4 flex items-center justify-between">
+                                <p className="text-slate-600">
+                                    عرض {safeProducts.data.length} من {safeProducts.total} منتج
+                                </p>
+                            </div>
+
+                            {safeProducts.data.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {safeProducts.data.map((product) => (
+                                        <ProductCard key={product.id} product={product} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <div className="text-6xl mb-4">🔍</div>
+                                    <h3 className="text-lg font-medium text-slate-900 mb-2">لم يتم العثور على منتجات</h3>
+                                    <p className="text-slate-600">جرب تغيير معايير البحث أو التصفية</p>
+                                </div>
+                            )}
+
+                            {/* Pagination */}
+                            {safeProducts.links && safeProducts.links.length > 3 && (
+                                <div className="mt-8 flex justify-center">
+                                    <nav className="flex space-x-2">
+                                        {safeProducts.links.map((link, index) => (
+                                            <Link
+                                                key={index}
+                                                href={link.url || '#'}
+                                                className={`px-3 py-2 text-sm rounded-lg ${
+                                                    link.active
+                                                        ? 'bg-purple-600 text-white'
+                                                        : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-300'
+                                                } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        ))}
+                                    </nav>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* App Download Section */}
+            <AppDownloadSection />
+        </Layout>
+    );
+}

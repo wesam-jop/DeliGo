@@ -1,0 +1,541 @@
+@import 'tailwindcss';
+@import './phone-input.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.jsx';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-cairo: 'Cairo', ui-sans-serif, system-ui, sans-serif;
+    
+    /* ============================================
+       متغيرات الألوان الأساسية - Color Variables
+       ============================================
+       يمكن تغيير ألوان الموقع من هنا
+       Change site colors from here
+       ============================================ */
+    
+    /* اللون الأساسي - Primary Color (Purple) */
+    --color-primary-50: #faf5ff;
+    --color-primary-100: #f3e8ff;
+    --color-primary-200: #e9d5ff;
+    --color-primary-300: #d8b4fe;
+    --color-primary-400: #c084fc;
+    --color-primary-500: #a855f7;
+    --color-primary-600: #9333ea;
+    --color-primary-700: #7e22ce;
+    --color-primary-800: #6b21a8;
+    --color-primary-900: #581c87;
+    --color-primary-950: #3b0764;
+    
+    /* اللون الثانوي - Secondary Color (Slate/Dark) */
+    --color-secondary-50: #f8fafc;
+    --color-secondary-100: #f1f5f9;
+    --color-secondary-200: #e2e8f0;
+    --color-secondary-300: #cbd5e1;
+    --color-secondary-400: #94a3b8;
+    --color-secondary-500: #64748b;
+    --color-secondary-600: #475569;
+    --color-secondary-700: #334155;
+    --color-secondary-800: #1e293b;
+    --color-secondary-900: #0f172a;
+    --color-secondary-950: #020617;
+    
+    /* اللون المميز - Accent Color (Blue) */
+    --color-accent-50: #eff6ff;
+    --color-accent-100: #dbeafe;
+    --color-accent-200: #bfdbfe;
+    --color-accent-300: #93c5fd;
+    --color-accent-400: #60a5fa;
+    --color-accent-500: #3b82f6;
+    --color-accent-600: #2563eb;
+    --color-accent-700: #1d4ed8;
+    --color-accent-800: #1e40af;
+    --color-accent-900: #1e3a8a;
+    --color-accent-950: #172554;
+    
+    /* لون الخلفية الداكن - Dark Background */
+    --color-dark-50: #f8fafc;
+    --color-dark-100: #f1f5f9;
+    --color-dark-200: #e2e8f0;
+    --color-dark-300: #cbd5e1;
+    --color-dark-400: #94a3b8;
+    --color-dark-500: #64748b;
+    --color-dark-600: #475569;
+    --color-dark-700: #334155;
+    --color-dark-800: #1e293b;
+    --color-dark-900: #0f172a;
+    --color-dark-950: #020617;
+    
+    /* ============================================
+       ألوان Tailwind المخصصة
+       Custom Tailwind Colors
+       ============================================ */
+    
+    /* Primary Purple */
+    --color-purple-50: var(--color-primary-50);
+    --color-purple-100: var(--color-primary-100);
+    --color-purple-200: var(--color-primary-200);
+    --color-purple-300: var(--color-primary-300);
+    --color-purple-400: var(--color-primary-400);
+    --color-purple-500: var(--color-primary-500);
+    --color-purple-600: var(--color-primary-600);
+    --color-purple-700: var(--color-primary-700);
+    --color-purple-800: var(--color-primary-800);
+    --color-purple-900: var(--color-primary-900);
+    --color-purple-950: var(--color-primary-950);
+    
+    /* Secondary Slate */
+    --color-slate-50: var(--color-secondary-50);
+    --color-slate-100: var(--color-secondary-100);
+    --color-slate-200: var(--color-secondary-200);
+    --color-slate-300: var(--color-secondary-300);
+    --color-slate-400: var(--color-secondary-400);
+    --color-slate-500: var(--color-secondary-500);
+    --color-slate-600: var(--color-secondary-600);
+    --color-slate-700: var(--color-secondary-700);
+    --color-slate-800: var(--color-secondary-800);
+    --color-slate-900: var(--color-secondary-900);
+    --color-slate-950: var(--color-secondary-950);
+    
+    /* Accent Blue */
+    --color-blue-50: var(--color-accent-50);
+    --color-blue-100: var(--color-accent-100);
+    --color-blue-200: var(--color-accent-200);
+    --color-blue-300: var(--color-accent-300);
+    --color-blue-400: var(--color-accent-400);
+    --color-blue-500: var(--color-accent-500);
+    --color-blue-600: var(--color-accent-600);
+    --color-blue-700: var(--color-accent-700);
+    --color-blue-800: var(--color-accent-800);
+    --color-blue-900: var(--color-accent-900);
+    --color-blue-950: var(--color-accent-950);
+}
+
+/* RTL Support */
+[dir="rtl"] {
+    direction: rtl;
+}
+
+[dir="ltr"] {
+    direction: ltr;
+}
+
+/* Arabic Font */
+.font-cairo {
+    font-family: 'Cairo', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* RTL Layout Adjustments */
+[dir="rtl"] .space-x-2 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-x-reverse: 1;
+    margin-right: calc(0.5rem * var(--tw-space-x-reverse));
+    margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
+[dir="rtl"] .space-x-4 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-x-reverse: 1;
+    margin-right: calc(1rem * var(--tw-space-x-reverse));
+    margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
+[dir="rtl"] .space-x-8 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-x-reverse: 1;
+    margin-right: calc(2rem * var(--tw-space-x-reverse));
+    margin-left: calc(2rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
+/* RTL Text Alignment */
+[dir="rtl"] {
+    text-align: right;
+}
+
+[dir="ltr"] {
+    text-align: left;
+}
+
+/* RTL Flex Direction */
+[dir="rtl"] .flex {
+    flex-direction: row-reverse;
+}
+
+[dir="ltr"] .flex {
+    flex-direction: row;
+}
+
+/* RTL Margin and Padding */
+[dir="rtl"] .ml-auto {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+}
+
+[dir="rtl"] .mr-auto {
+    margin-right: 0 !important;
+    margin-left: auto !important;
+}
+
+[dir="rtl"] .pl-4 {
+    padding-left: 0 !important;
+    padding-right: 1rem !important;
+}
+
+[dir="rtl"] .pr-4 {
+    padding-right: 0 !important;
+    padding-left: 1rem !important;
+}
+
+/* RTL Border Radius */
+[dir="rtl"] .rounded-l-lg {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: 0.5rem !important;
+    border-bottom-right-radius: 0.5rem !important;
+}
+
+[dir="rtl"] .rounded-r-lg {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-top-left-radius: 0.5rem !important;
+    border-bottom-left-radius: 0.5rem !important;
+}
+
+/* Force RTL/LTR on body */
+body[dir="rtl"] {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+body[dir="ltr"] {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+/* RTL Grid Support */
+[dir="rtl"] .grid {
+    direction: rtl;
+}
+
+[dir="ltr"] .grid {
+    direction: ltr;
+}
+
+/* RTL Transform Support */
+[dir="rtl"] .transform {
+    transform: scaleX(-1);
+}
+
+[dir="ltr"] .transform {
+    transform: scaleX(1);
+}
+
+/* RTL Icon Support */
+[dir="rtl"] .lucide {
+    transform: scaleX(-1);
+}
+
+[dir="ltr"] .lucide {
+    transform: scaleX(1);
+}
+
+/* RTL Position Support */
+[dir="rtl"] .left-0 {
+    left: auto !important;
+    right: 0 !important;
+}
+
+[dir="rtl"] .right-0 {
+    right: auto !important;
+    left: 0 !important;
+}
+
+[dir="rtl"] .left-4 {
+    left: auto !important;
+    right: 1rem !important;
+}
+
+[dir="rtl"] .right-4 {
+    right: auto !important;
+    left: 1rem !important;
+}
+
+/* RTL Border Support */
+[dir="rtl"] .border-l {
+    border-left: none !important;
+    border-right: 1px solid !important;
+}
+
+[dir="rtl"] .border-r {
+    border-right: none !important;
+    border-left: 1px solid !important;
+}
+
+/* RTL Shadow Support */
+[dir="rtl"] .shadow-lg {
+    box-shadow: -10px 10px 15px -3px rgba(0, 0, 0, 0.1), -4px 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Body RTL/LTR Classes */
+body.rtl {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+body.ltr {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+/* RTL Text Direction Utilities */
+.rtl {
+    direction: rtl !important;
+}
+
+.ltr {
+    direction: ltr !important;
+}
+
+/* RTL Float Support */
+[dir="rtl"] .float-left {
+    float: right !important;
+}
+
+[dir="rtl"] .float-right {
+    float: left !important;
+}
+
+/* RTL Clear Support */
+[dir="rtl"] .clear-left {
+    clear: right !important;
+}
+
+[dir="rtl"] .clear-right {
+    clear: left !important;
+}
+
+/* Cursor Pointer for Interactive Elements */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn,
+.button,
+[role="button"],
+a:not([href]):not([tabindex]),
+.clickable,
+.cursor-pointer,
+select,
+option,
+label,
+.tab,
+.tab-button,
+.nav-link,
+.dropdown-toggle,
+.menu-item,
+.card:not(.disabled),
+.product-card:not(.disabled),
+.category-card:not(.disabled) {
+    cursor: pointer !important;
+}
+
+/* Hover effects for better UX */
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+.btn:hover,
+.button:hover,
+[role="button"]:hover,
+a:not([href]):not([tabindex]):hover,
+.clickable:hover,
+.cursor-pointer:hover,
+select:hover,
+label:hover,
+.tab:hover,
+.tab-button:hover,
+.nav-link:hover,
+.dropdown-toggle:hover,
+.menu-item:hover,
+.card:not(.disabled):hover,
+.product-card:not(.disabled):hover,
+.category-card:not(.disabled):hover {
+    cursor: pointer !important;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+/* Disabled elements should not have pointer cursor */
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled,
+.btn:disabled,
+.button:disabled,
+[role="button"]:disabled,
+.disabled,
+.card.disabled,
+.product-card.disabled,
+.category-card.disabled {
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+
+/* React Component specific cursor styles */
+.flex.items-center.space-x-2,
+.flex.items-center.space-x-4,
+.flex.items-center.space-x-8,
+.flex.items-center.gap-2,
+.flex.items-center.gap-4,
+.flex.items-center.gap-8,
+.relative.group,
+.absolute,
+.relative,
+.inline-flex,
+.flex,
+.grid,
+.space-y-2 > *,
+.space-y-4 > *,
+.space-y-8 > *,
+.bg-white.rounded-lg.shadow-lg,
+.bg-gray-50.rounded-lg,
+.bg-purple-50.rounded-lg,
+.text-gray-700,
+.text-purple-600,
+.text-white,
+.hover\\:bg-gray-100,
+.hover\\:bg-purple-100,
+.hover\\:text-purple-600,
+.hover\\:text-gray-700,
+.transition-colors,
+.transition-all,
+.duration-200,
+.duration-300,
+.ease-in-out,
+.ease-out {
+    cursor: pointer;
+}
+
+/* Specific component styles */
+.language-switcher,
+.product-card,
+.category-card,
+.nav-item,
+.menu-item,
+.dropdown-item,
+.modal-trigger,
+.cart-item,
+.order-item,
+.search-result,
+.filter-option,
+.sort-option,
+.pagination-item,
+.social-link,
+.download-button,
+.app-download-button,
+.feature-card,
+.testimonial-card,
+.newsletter-signup,
+.contact-form,
+.footer-link {
+    cursor: pointer !important;
+}
+
+/* Ensure all clickable divs have pointer cursor */
+div[onClick],
+div[onclick],
+div[onMouseDown],
+div[onmousedown],
+div[onMouseUp],
+div[onmouseup],
+div[onTouchStart],
+div[ontouchstart],
+div[onTouchEnd],
+div[ontouchend] {
+    cursor: pointer !important;
+}
+
+/* Global cursor pointer for all interactive elements */
+*[onClick],
+*[onclick],
+*[onMouseDown],
+*[onmousedown],
+*[onMouseUp],
+*[onmouseup],
+*[onTouchStart],
+*[ontouchstart],
+*[onTouchEnd],
+*[ontouchend],
+*[onKeyDown],
+*[onkeydown],
+*[onKeyUp],
+*[onkeyup],
+*[onKeyPress],
+*[onkeypress] {
+    cursor: pointer !important;
+}
+
+/* Additional utility classes */
+.cursor-pointer {
+    cursor: pointer !important;
+}
+
+.cursor-default {
+    cursor: default !important;
+}
+
+.cursor-not-allowed {
+    cursor: not-allowed !important;
+}
+
+.cursor-help {
+    cursor: help !important;
+}
+
+.cursor-move {
+    cursor: move !important;
+}
+
+.cursor-grab {
+    cursor: grab !important;
+}
+
+.cursor-grabbing {
+    cursor: grabbing !important;
+}
+
+/* Ensure all buttons and links have proper cursor */
+a,
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+select,
+option,
+label,
+[role="button"],
+[role="link"],
+[role="menuitem"],
+[role="tab"],
+[role="option"] {
+    cursor: pointer !important;
+}
+
+/* Text inputs should have text cursor */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+textarea {
+    cursor: text !important;
+}
+.flag.sy {
+    background-image: url("../js/assets/images/sy.jpg") !important;
+    background-size: cover;
+}

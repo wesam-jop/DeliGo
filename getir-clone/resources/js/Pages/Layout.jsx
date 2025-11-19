@@ -1,0 +1,259 @@
+import React, { useEffect, useState } from 'react';
+import { Link, usePage } from '@inertiajs/react';
+import LanguageSwitcher from '../Components/LanguageSwitcher';
+import { useTranslation } from '../hooks/useTranslation';
+import { 
+    Home, 
+    Package, 
+    ShoppingBag, 
+    ShoppingCart, 
+    User, 
+    LogOut, 
+    LogIn,
+    Store,
+    Truck,
+    Heart,
+    Phone,
+    Download,
+    Apple,
+    Smartphone,
+    Menu,
+    X
+} from 'lucide-react';
+
+export default function Layout({ children }) {
+    const { props, url } = usePage();
+    const { t, locale } = useTranslation();
+    const cartCount = props.cartCount || 0;
+    const user = props?.auth?.user;
+    const settings = props?.settings || {};
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    // تحديث الـ dir عند تغيير اللغة
+    useEffect(() => {
+        updateDirection(locale);
+    }, [locale]);
+
+    // إغلاق القائمة عند تغيير الصفحة
+    useEffect(() => {
+        setMobileMenuOpen(false);
+    }, [url]);
+
+    const updateDirection = (currentLocale) => {
+        const isRTL = currentLocale === 'ar';
+        
+        // تحديث الـ dir للـ html و body
+        document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+        document.documentElement.setAttribute('lang', currentLocale);
+        document.body.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+        
+        // تحديث الـ font family
+        if (isRTL) {
+            document.body.classList.add('font-cairo');
+        } else {
+            document.body.classList.remove('font-cairo');
+        }
+    };
+
+    const navLinks = [
+        {
+            href: '/',
+            label: t('home'),
+            icon: Home
+        },
+        {
+            href: '/products',
+            label: t('products'),
+            icon: Package
+        },
+        {
+            href: '/stores',
+            label: t('stores_page_title'),
+            icon: Store
+        },
+        {
+            href: '/orders',
+            label: t('orders'),
+            icon: ShoppingBag
+        }
+    ];
+
+    const renderNavLinks = (variant = 'desktop') => (
+        navLinks.map(({ href, label, icon: Icon }) => (
+            <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-purple-600 transition-colors ${
+                    variant === 'mobile' ? 'py-2' : ''
+                }`}
+            >
+                <Icon className="w-5 h-5" />
+                <span>{label}</span>
+            </Link>
+        ))
+    );
+
+    const renderAuthSection = (variant = 'desktop') => {
+        if (user) {
+            return (
+                <div className={`flex ${variant === 'mobile' ? 'flex-col gap-3' : 'items-center gap-3'}`}>
+                    <div className="flex items-center gap-2">
+                        <User className="w-5 h-5 text-slate-600" />
+                        <span className="text-sm text-slate-700 font-medium">{user.name}</span>
+                    </div>
+                    <Link
+                        href={user.user_type === 'admin' ? '/admin/dashboard' : 
+                              user.user_type === 'store_owner' ? '/dashboard/store' :
+                              user.user_type === 'driver' ? '/dashboard/driver' : '/dashboard/customer'}
+                        className="flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                    >
+                        <User className="w-4 h-4" />
+                        <span>{t('dashboard')}</span>
+                    </Link>
+                    <Link
+                        href="/logout"
+                        method="post"
+                        className="flex items-center justify-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        <span>{t('logout')}</span>
+                    </Link>
+                </div>
+            );
+        }
+
+        return (
+            <Link
+                href="/login"
+                className={`flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium ${variant === 'mobile' ? 'w-full' : ''}`}
+            >
+                <LogIn className="w-4 h-4" />
+                <span>{t('login')}</span>
+            </Link>
+        );
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-50">
+            {/* Header */}
+            <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center py-4 gap-4">
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                className="md:hidden inline-flex items-center justify-center rounded-md border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                                aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                                aria-expanded={mobileMenuOpen}
+                            >
+                                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                            </button>
+                            <Link href="/" className="flex items-center gap-2">
+                                {settings?.site_logo && settings.site_logo.trim() !== '' ? (
+                                    <>
+                                        <img 
+                                            src={settings.site_logo.startsWith('http') ? settings.site_logo : (settings.site_logo.startsWith('/') ? settings.site_logo : `/${settings.site_logo}`)} 
+                                            alt={settings?.site_name || 'Getir Clone'} 
+                                            className="h-8 w-auto object-contain"
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                if (e.target.nextElementSibling) {
+                                                    e.target.nextElementSibling.style.display = 'inline';
+                                                }
+                                            }}
+                                        />
+                                        <span className="text-2xl font-bold text-purple-600 whitespace-nowrap" style={{ display: 'none' }}>
+                                            {settings?.site_name || 'Getir Clone'}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="text-2xl font-bold text-purple-600 whitespace-nowrap">
+                                        {settings?.site_name || 'Getir Clone'}
+                                    </span>
+                                )}
+                            </Link>
+                        </div>
+                        
+                        <nav className="hidden md:flex items-center gap-6">
+                            {renderNavLinks()}
+                        </nav>
+                        
+                        <div className="flex items-center gap-4">
+                            <div className="hidden md:block">
+                                <LanguageSwitcher currentLocale={locale} />
+                            </div>
+                            <Link href="/cart" className="relative p-2 text-slate-700 hover:text-purple-600 transition-colors">
+                                <ShoppingCart className="w-6 h-6" />
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                        {cartCount}
+                                    </span>
+                                )}
+                            </Link>
+                            <div className="hidden md:flex items-center gap-3">
+                                {renderAuthSection()}
+                            </div>
+                        </div>
+                    </div>
+                    {mobileMenuOpen && (
+                        <div className="md:hidden border-t border-slate-100 pt-4 pb-6 space-y-6">
+                            <nav className="flex flex-col gap-2">
+                                {renderNavLinks('mobile')}
+                            </nav>
+                            <LanguageSwitcher currentLocale={locale} />
+                            {renderAuthSection('mobile')}
+                        </div>
+                    )}
+                </div>
+            </header>
+
+            {/* Main Content */}
+            <main>
+                {children}
+            </main>
+
+            {/* Footer */}
+            <footer className="bg-slate-900 text-white py-12 ">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid md:grid-cols-4 gap-8">
+                        <div>
+                            <h3 className="text-lg font-semibold mb-4">{settings?.site_name || 'Getir Clone'}</h3>
+                            <p className="text-slate-400">
+                                {settings?.site_description || t('footer_description')}
+                            </p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold mb-4">{t('quick_links')}</h4>
+                            <ul className="space-y-2 text-slate-400">
+                                <li><Link href="/about" className="hover:text-white transition-colors">{t('about_us')}</Link></li>
+                                <li><Link href="/contact" className="hover:text-white transition-colors">{t('contact_us')}</Link></li>
+                                <li><Link href="/careers" className="hover:text-white transition-colors">{t('careers')}</Link></li>
+                                <li><Link href="/help" className="hover:text-white transition-colors">{t('help')}</Link></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold mb-4">{t('services')}</h4>
+                            <ul className="space-y-2 text-slate-400">
+                                {/* <li><Link href="/services/grocery-delivery" className="flex items-center space-x-2 hover:text-white transition-colors"><Store className="w-4 h-4" /><span>{t('grocery_delivery')}</span></Link></li>
+                                <li><Link href="/services/food-delivery" className="flex items-center space-x-2 hover:text-white transition-colors"><Truck className="w-4 h-4" /><span>{t('food_delivery')}</span></Link></li>
+                                <li><Link href="/services/pharmacy" className="flex items-center space-x-2 hover:text-white transition-colors"><Heart className="w-4 h-4" /><span>{t('pharmacy')}</span></Link></li>
+                                <li><Link href="/services/pet-supplies" className="flex items-center space-x-2 hover:text-white transition-colors"><Package className="w-4 h-4" /><span>{t('pet_supplies')}</span></Link></li> */}
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold mb-4">{t('download_app')}</h4>
+                            <Link href="/download-app" className="flex items-center justify-center space-x-2 w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                                <Smartphone className="w-5 h-5" />
+                                <span>{t('download_app')}</span>
+                            </Link>
+                        </div>
+                    </div>
+                    <div className="border-t border-slate-800 mt-8 pt-8 text-center text-slate-400">
+                        <p>&copy; 2024 Getir Clone. {t('all_rights_reserved')}</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    );
+}
