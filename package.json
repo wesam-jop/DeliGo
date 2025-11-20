@@ -1,0 +1,20 @@
+{
+  "name": "bazarli",
+  "version": "1.0.0",
+  "description": "bazarli",
+  "main": "index.js",
+  "scripts": {
+    "dev:install": "cd web && npm install && composer install && php -r \"file_exists('.env') || copy('.env.example', '.env');\" && php artisan migrate && php artisan migrate:f --seed",
+    "dev:web": "cd web && npx concurrently \"npm run dev\" \"php artisan serve\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wesam-jop/bazarli.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wesam-jop/bazarli/issues"
+  },
+  "homepage": "https://github.com/wesam-jop/bazarli#readme"
+}
