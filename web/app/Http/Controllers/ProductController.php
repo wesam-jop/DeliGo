@@ -13,6 +13,8 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
+        
         $query = Product::with([
             'category',
             'store' => function($q) {
@@ -31,15 +33,25 @@ class ProductController extends Controller
             $query->where('category_id', $request->category);
         }
 
-        // فلترة حسب المحافظة (من خلال المتجر)
-        if ($governorateId = $request->get('governorate_id')) {
+        // فلترة حسب المحافظة (من خلال المتجر) - تأخذ من إعدادات المستخدم إذا لم يتم تحديدها
+        $governorateId = $request->get('governorate_id');
+        if (!$governorateId && $user && $user->governorate_id) {
+            $governorateId = $user->governorate_id;
+        }
+        if ($governorateId) {
             $query->whereHas('store', function($q) use ($governorateId) {
                 $q->where('governorate_id', $governorateId);
             });
         }
 
-        // فلترة حسب المنطقة (من خلال المتجر)
-        if ($cityId = $request->get('city_id')) {
+        // فلترة حسب المنطقة (من خلال المتجر) - تأخذ من إعدادات المستخدم إذا لم يتم تحديدها
+        $cityId = $request->get('city_id');
+        if (!$cityId && $user && $user->city_id && !$governorateId) {
+            // إذا لم يتم تحديد فلتر المحافظة والمنطقة، استخدم إعدادات المستخدم
+            $cityId = $user->city_id;
+            $governorateId = $user->governorate_id;
+        }
+        if ($cityId) {
             $query->whereHas('store', function($q) use ($cityId) {
                 $q->where('city_id', $cityId);
             });
@@ -71,7 +83,7 @@ class ProductController extends Controller
             ]);
 
         $cities = [];
-        if ($governorateId = $request->get('governorate_id')) {
+        if ($governorateId) {
             $cities = City::active()
                 ->where('governorate_id', $governorateId)
                 ->orderBy('display_order')
@@ -81,13 +93,39 @@ class ProductController extends Controller
                     'name' => app()->getLocale() === 'ar' ? $city->name_ar : $city->name_en,
                 ]);
         }
+        
+        // إذا كان المستخدم لديه city_id ولم يتم تحديد governorate_id، جلب المدن للمحافظة التابعة لها
+        if (!$governorateId && $cityId && $user) {
+            $userCity = City::find($cityId);
+            if ($userCity && $userCity->governorate_id) {
+                $governorateId = $userCity->governorate_id;
+                // جلب جميع المدن لهذه المحافظة
+                $cities = City::active()
+                    ->where('governorate_id', $governorateId)
+                    ->orderBy('display_order')
+                    ->get()
+                    ->map(fn ($city) => [
+                        'id' => $city->id,
+                        'name' => app()->getLocale() === 'ar' ? $city->name_ar : $city->name_en,
+                    ]);
+            }
+        }
+
+        // تحديد الفلتر الافتراضي من إعدادات المستخدم
+        $defaultGovernorateId = $user && $user->governorate_id ? $user->governorate_id : ($request->get('governorate_id') ?: '');
+        $defaultCityId = $user && $user->city_id ? $user->city_id : ($request->get('city_id') ?: '');
 
         return Inertia::render('Products/Index', [
             'products' => $products,
             'categories' => $categories,
             'governorates' => $governorates,
             'cities' => $cities,
-            'filters' => $request->only(['search', 'category', 'sort', 'direction', 'governorate_id', 'city_id']),
+            'userGovernorateId' => $user ? $user->governorate_id : null,
+            'userCityId' => $user ? $user->city_id : null,
+            'filters' => array_merge($request->only(['search', 'category', 'sort', 'direction', 'governorate_id', 'city_id']), [
+                'governorate_id' => $request->get('governorate_id') ?: $defaultGovernorateId,
+                'city_id' => $request->get('city_id') ?: $defaultCityId,
+            ]),
         ]);
     }
 

@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CartController extends Controller
 {
@@ -16,28 +18,55 @@ class CartController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $cart = $request->session()->get('cart', []);
-        $cartItems = [];
+        
+        $cartItems = Cart::where('user_id', $user->id)
+            ->with('product.category')
+            ->get();
+
+        $items = [];
         $total = 0;
 
-        foreach ($cart as $productId => $quantity) {
-            $product = Product::with('category')->find($productId);
-            if ($product && $product->is_available) {
-                $itemTotal = $product->price * $quantity;
-                $cartItems[] = [
-                    'product' => $product,
-                    'quantity' => $quantity,
-                    'subtotal' => $itemTotal,
-                ];
-                $total += $itemTotal;
+        foreach ($cartItems as $item) {
+            $product = $item->product;
+            
+            if (!$product || !$product->is_available) {
+                // Remove unavailable products
+                $item->delete();
+                continue;
             }
+
+            $itemTotal = $product->price * $item->quantity;
+            $total += $itemTotal;
+
+            $items[] = [
+                'id' => $item->id,
+                'product' => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'price' => (float) $product->price,
+                    'discount_price' => $product->discount_price ? (float) $product->discount_price : null,
+                    'final_price' => (float) $product->final_price,
+                    'image' => $product->image,
+                    'unit' => $product->unit,
+                    'stock_quantity' => $product->stock_quantity,
+                    'category' => $product->category ? [
+                        'id' => $product->category->id,
+                        'name' => $product->category->display_name ?? $product->category->name,
+                    ] : null,
+                ],
+                'quantity' => $item->quantity,
+                'subtotal' => (float) $itemTotal,
+                'created_at' => $item->created_at->toIso8601String(),
+            ];
         }
 
         return response()->json([
             'success' => true,
             'data' => [
-                'items' => $cartItems,
-                'total' => $total,
+                'items' => $items,
+                'total' => (float) $total,
+                'items_count' => count($items),
             ]
         ]);
     }
@@ -52,6 +81,7 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
+        $user = $request->user();
         $product = Product::findOrFail($request->product_id);
         
         if (!$product->is_available) {
@@ -61,24 +91,37 @@ class CartController extends Controller
             ], 400);
         }
 
-        $cart = $request->session()->get('cart', []);
-        $currentQuantity = $cart[$product->id] ?? 0;
-        $newQuantity = $currentQuantity + $request->quantity;
+        // Check if item already exists in cart
+        $cartItem = Cart::where('user_id', $user->id)
+            ->where('product_id', $product->id)
+            ->first();
+
+        $newQuantity = ($cartItem ? $cartItem->quantity : 0) + $request->quantity;
 
         if ($newQuantity > $product->stock_quantity) {
             return response()->json([
                 'success' => false,
-                'message' => 'الكمية المطلوبة غير متوفرة في المخزون'
+                'message' => 'الكمية المطلوبة غير متوفرة في المخزون. المتاح: ' . $product->stock_quantity
             ], 400);
         }
 
-        $cart[$product->id] = $newQuantity;
-        $request->session()->put('cart', $cart);
+        if ($cartItem) {
+            $cartItem->update(['quantity' => $newQuantity]);
+        } else {
+            Cart::create([
+                'user_id' => $user->id,
+                'product_id' => $product->id,
+                'quantity' => $request->quantity,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'تم إضافة المنتج إلى السلة بنجاح',
-            'data' => ['cart' => $cart]
+            'data' => [
+                'product_id' => $product->id,
+                'quantity' => $newQuantity,
+            ]
         ]);
     }
 
@@ -92,27 +135,44 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:0',
         ]);
 
+        $user = $request->user();
         $product = Product::findOrFail($request->product_id);
-        $cart = $request->session()->get('cart', []);
+        
+        $cartItem = Cart::where('user_id', $user->id)
+            ->where('product_id', $product->id)
+            ->first();
 
-        if ($request->quantity == 0) {
-            unset($cart[$product->id]);
-        } else {
-            if ($request->quantity > $product->stock_quantity) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'الكمية المطلوبة غير متوفرة في المخزون'
-                ], 400);
-            }
-            $cart[$product->id] = $request->quantity;
+        if (!$cartItem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'المنتج غير موجود في السلة'
+            ], 404);
         }
 
-        $request->session()->put('cart', $cart);
+        if ($request->quantity == 0) {
+            $cartItem->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'تم حذف المنتج من السلة',
+            ]);
+        }
+
+        if ($request->quantity > $product->stock_quantity) {
+            return response()->json([
+                'success' => false,
+                'message' => 'الكمية المطلوبة غير متوفرة في المخزون. المتاح: ' . $product->stock_quantity
+            ], 400);
+        }
+
+        $cartItem->update(['quantity' => $request->quantity]);
 
         return response()->json([
             'success' => true,
             'message' => 'تم تحديث السلة بنجاح',
-            'data' => ['cart' => $cart]
+            'data' => [
+                'product_id' => $product->id,
+                'quantity' => $request->quantity,
+            ]
         ]);
     }
 
@@ -121,14 +181,24 @@ class CartController extends Controller
      */
     public function remove(Request $request, $productId): JsonResponse
     {
-        $cart = $request->session()->get('cart', []);
-        unset($cart[$productId]);
-        $request->session()->put('cart', $cart);
+        $user = $request->user();
+        
+        $cartItem = Cart::where('user_id', $user->id)
+            ->where('product_id', $productId)
+            ->first();
+
+        if (!$cartItem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'المنتج غير موجود في السلة'
+            ], 404);
+        }
+
+        $cartItem->delete();
 
         return response()->json([
             'success' => true,
             'message' => 'تم حذف المنتج من السلة',
-            'data' => ['cart' => $cart]
         ]);
     }
 
@@ -137,12 +207,30 @@ class CartController extends Controller
      */
     public function clear(Request $request): JsonResponse
     {
-        $request->session()->forget('cart');
+        $user = $request->user();
+        
+        Cart::where('user_id', $user->id)->delete();
         
         return response()->json([
             'success' => true,
             'message' => 'تم مسح السلة بنجاح'
         ]);
     }
-}
 
+    /**
+     * Get cart count
+     */
+    public function count(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        $count = Cart::where('user_id', $user->id)->sum('quantity');
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'count' => (int) $count,
+            ]
+        ]);
+    }
+}

@@ -25,8 +25,10 @@ class Order extends Model
         'delivery_address',
         'delivery_latitude',
         'delivery_longitude',
+        'area_id',
         'customer_phone',
         'notes',
+        'location_notes',
         'estimated_delivery_time',
         'delivered_at',
     ];
@@ -90,6 +92,11 @@ class Order extends Model
     public function orderStores(): HasMany
     {
         return $this->hasMany(OrderStore::class);
+    }
+
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(Area::class);
     }
 
     public function scopeByStatus($query, $status)

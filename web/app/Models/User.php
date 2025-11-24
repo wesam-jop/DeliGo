@@ -32,6 +32,7 @@ class User extends Authenticatable
         'longitude',
         'governorate_id',
         'city_id',
+        'area_id',
         'user_type',
         'is_verified',
         'verification_code',
@@ -86,9 +87,19 @@ class User extends Authenticatable
         return $this->belongsToMany(Product::class, 'favorite_products')->withTimestamps();
     }
 
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(Cart::class);
+    }
+
     public function driverApplication(): HasOne
     {
         return $this->hasOne(DriverApplication::class);
+    }
+
+    public function workingHours(): HasMany
+    {
+        return $this->hasMany(DriverWorkingHour::class);
     }
 
     public function hasFavoritedProduct(int $productId): bool
@@ -111,6 +122,31 @@ class User extends Authenticatable
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(Area::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function unreadNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class)->where('is_read', false);
+    }
+
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
+
+    public function activePushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class)->where('is_active', true);
     }
 
     // Scopes

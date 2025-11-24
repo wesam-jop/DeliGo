@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Order;
+use App\Models\OrderStore;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Store;
@@ -94,15 +95,36 @@ class DashboardController extends Controller
             abort(403);
         }
 
+        $governorates = \App\Models\Governorate::active()
+            ->orderBy('display_order')
+            ->get()
+            ->map(fn ($gov) => [
+                'id' => $gov->id,
+                'name' => app()->getLocale() === 'ar' ? $gov->name_ar : $gov->name_en,
+            ]);
+
+        $areas = \App\Models\Area::active()
+            ->ordered()
+            ->get()
+            ->map(fn ($area) => [
+                'id' => $area->id,
+                'name' => app()->getLocale() === 'ar' ? $area->name : ($area->name_en ?? $area->name),
+                'city' => app()->getLocale() === 'ar' ? $area->city : ($area->city_en ?? $area->city),
+            ]);
+
         return Inertia::render('Dashboard/CustomerProfile', [
             'customer' => [
                 'name' => $user->name,
                 'phone' => $user->phone,
                 'address' => $user->address,
                 'avatar' => $user->avatar,
+                'governorate_id' => $user->governorate_id,
+                'area_id' => $user->area_id,
                 'is_verified' => $user->is_verified,
                 'created_at_formatted' => $user->created_at ? $user->created_at->translatedFormat('d M Y') : '',
             ],
+            'governorates' => $governorates,
+            'areas' => $areas,
         ]);
     }
 
@@ -121,6 +143,8 @@ class DashboardController extends Controller
             'name' => 'required|string|max:255',
             'phone' => 'required|string|unique:users,phone,' . $user->id,
             'address' => 'nullable|string|max:500',
+            'governorate_id' => 'required|exists:governorates,id',
+            'area_id' => 'required|exists:areas,id',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -128,6 +152,8 @@ class DashboardController extends Controller
             'name' => $request->name,
             'phone' => preg_replace('/\D/', '', $request->phone),
             'address' => $request->address,
+            'governorate_id' => $request->governorate_id,
+            'area_id' => $request->area_id,
         ];
 
         if ($request->hasFile('avatar')) {
@@ -702,19 +728,59 @@ class DashboardController extends Controller
         }
 
         // إحصائيات السائق
+        $driverOrdersQuery = Order::where('delivery_driver_id', $user->id);
+        
+        // حساب الأرباح من order_stores
+        $deliveredOrdersIds = (clone $driverOrdersQuery)->where('status', 'delivered')->pluck('id');
+        $totalEarnings = OrderStore::whereIn('order_id', $deliveredOrdersIds)->sum('delivery_fee');
+        
+        $todayDeliveredOrdersIds = (clone $driverOrdersQuery)->whereDate('updated_at', today())->where('status', 'delivered')->pluck('id');
+        $thisMonthDeliveredOrdersIds = (clone $driverOrdersQuery)->whereMonth('updated_at', now()->month)->whereYear('updated_at', now()->year)->where('status', 'delivered')->pluck('id');
+        $thisMonthEarnings = OrderStore::whereIn('order_id', $thisMonthDeliveredOrdersIds)->sum('delivery_fee');
+        
         $stats = [
-            'total_deliveries' => $user->orders()->count(),
-            'pending_deliveries' => $user->orders()->where('status', 'out_for_delivery')->count(),
-            'completed_deliveries' => $user->orders()->where('status', 'delivered')->count(),
-            'total_earnings' => $user->orders()->where('status', 'delivered')->sum('delivery_fee'),
+            'total_deliveries' => (clone $driverOrdersQuery)->count(),
+            'pending_deliveries' => (clone $driverOrdersQuery)->whereIn('status', ['driver_accepted', 'pending_store_approval', 'store_approved', 'driver_picked_up', 'out_for_delivery'])->count(),
+            'completed_deliveries' => (clone $driverOrdersQuery)->where('status', 'delivered')->count(),
+            'total_earnings' => $totalEarnings ?? 0,
+            'today_deliveries' => count($todayDeliveredOrdersIds),
+            'this_week_deliveries' => (clone $driverOrdersQuery)->whereBetween('updated_at', [now()->startOfWeek(), now()->endOfWeek()])->where('status', 'delivered')->count(),
+            'this_month_earnings' => $thisMonthEarnings ?? 0,
         ];
 
         // الطلبات المخصصة للسائق
         $assignedOrders = Order::where('delivery_driver_id', $user->id)
-            ->with(['user', 'store', 'orderItems.product'])
+            ->whereNotIn('status', ['pending_driver_approval', 'driver_rejected', 'delivered'])
+            ->with([
+                'user:id,name,phone',
+                'orderStores.store:id,name,address',
+                'orderItems.store:id,name',
+                'orderItems.product:id,name'
+            ])
             ->orderBy('created_at', 'desc')
             ->limit(10)
-            ->get();
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'order_number' => $order->order_number ?? ('#' . $order->id),
+                    'status' => $order->status,
+                    'total_amount' => $order->total_amount,
+                    'delivery_address' => $order->delivery_address,
+                    'customer_phone' => $order->customer_phone,
+                    'created_at' => $order->created_at,
+                    'customer_name' => $order->user?->name,
+                    'stores' => $order->orderStores->map(function ($orderStore) {
+                        return [
+                            'id' => $orderStore->store->id,
+                            'name' => $orderStore->store->name,
+                            'address' => $orderStore->store->address,
+                            'status' => $orderStore->status,
+                        ];
+                    }),
+                    'stores_count' => $order->orderStores->count(),
+                ];
+            });
 
         // الطلبات في انتظار موافقة عامل التوصيل - فقط من نفس المنطقة
         $availableOrders = Order::where('status', 'pending_driver_approval')
@@ -744,12 +810,21 @@ class DashboardController extends Controller
                     'status' => $order->status,
                     'total_amount' => $order->total_amount,
                     'delivery_address' => $order->delivery_address,
-                    'customer_phone' => $order->customer_phone,
+                    'customer_phone' => $order->customer_phone ?? $order->user?->phone,
+                    'customer_name' => $order->user?->name,
                     'created_at' => $order->created_at,
                     'store' => $order->orderStores->first()?->store ? [
                         'name' => $order->orderStores->first()->store->name,
                         'address' => $order->orderStores->first()->store->address,
                     ] : null,
+                    'stores' => $order->orderStores->map(function ($orderStore) {
+                        return [
+                            'id' => $orderStore->store->id,
+                            'name' => $orderStore->store->name,
+                            'address' => $orderStore->store->address,
+                            'status' => $orderStore->status,
+                        ];
+                    }),
                     'stores_count' => $order->orderStores->count(),
                 ];
             });

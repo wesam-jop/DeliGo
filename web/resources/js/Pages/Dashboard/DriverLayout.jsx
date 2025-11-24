@@ -8,13 +8,14 @@ import {
     Menu,
     X,
     Search,
-    Bell,
     ChevronDown,
     HelpCircle,
     LogOut,
     ClipboardList,
+    Clock,
 } from 'lucide-react';
 import UserAvatar from '../../Components/UserAvatar';
+import NotificationBell from '../../Components/NotificationBell';
 import { useTranslation } from '../../hooks/useTranslation';
 
 export default function DriverLayout({ children, title, subtitle }) {
@@ -25,21 +26,17 @@ export default function DriverLayout({ children, title, subtitle }) {
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
-    const [notificationsOpen, setNotificationsOpen] = useState(false);
-    const notificationsRef = useRef(null);
     const userMenuRef = useRef(null);
 
     const navItems = [
         { label: t('driver_dashboard') || 'Driver Dashboard', href: '/dashboard/driver', icon: LayoutDashboard },
         { label: t('driver_orders_page_title'), href: '/dashboard/driver/orders', icon: ClipboardList },
+        { label: t('working_hours') || 'سجل الدوام', href: '/dashboard/driver/working-hours', icon: Clock },
         { label: t('profile'), href: '/dashboard/driver/profile', icon: User },
     ];
 
     useEffect(() => {
         const handler = (event) => {
-            if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
-                setNotificationsOpen(false);
-            }
             if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
                 setUserMenuOpen(false);
             }
@@ -52,34 +49,47 @@ export default function DriverLayout({ children, title, subtitle }) {
         <div className="min-h-screen bg-slate-50">
             <Head title={title} />
 
-            <div className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-200 bg-white shadow-xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-                <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200">
+            {/* Mobile sidebar overlay */}
+            {sidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+            
+            {/* Sidebar */}
+            <div className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-200 bg-white shadow-xl transition-transform duration-300 ${
+                sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+            }`}>
+                <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200 flex-shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white font-semibold flex items-center justify-center">
-                            GC
-                        </div>
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white font-semibold flex items-center justify-center">GC</div>
                         <span className="font-semibold text-slate-900">{settings?.site_name || 'Getir Clone'}</span>
                     </div>
-                    <button className="lg:hidden p-2 text-slate-500" onClick={() => setSidebarOpen(false)}>
+                    <button className="lg:hidden p-2 text-slate-500 hover:text-slate-700" onClick={() => setSidebarOpen(false)}>
                         <X className="w-5 h-5" />
                     </button>
                 </div>
-                <nav className="p-4 space-y-1">
-                    {navItems.map(({ label, href, icon: Icon }) => (
+
+                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                    {navItems.map(({ label, href, icon: Icon }) => {
+                        const isActive = url === href || url.startsWith(`${href}?`) || url.startsWith(`${href}/`);
+                        return (
                         <Link
                             key={href}
                             href={href}
                             className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
-                                url === href ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'text-slate-600 hover:bg-slate-100'
+                                isActive ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'text-slate-600 hover:bg-slate-100'
                             }`}
                         >
                             <Icon className="w-5 h-5" />
                             <span>{label}</span>
                         </Link>
-                    ))}
+                        );
+                    })}
                 </nav>
 
-                <div className="mt-auto border-t border-slate-200 p-4 space-y-3">
+                <div className="flex-shrink-0 border-t border-slate-200 p-4 space-y-3">
                     <div className="flex items-center gap-3">
                         <UserAvatar user={user} size={44} />
                         <div>
@@ -99,11 +109,14 @@ export default function DriverLayout({ children, title, subtitle }) {
             </div>
 
             <div className="lg:pl-64 min-h-screen">
-                <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
+                <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm py-5">
                     <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center gap-3">
-                            <button className="lg:hidden p-2 rounded-lg border border-slate-200" onClick={() => setSidebarOpen(true)}>
-                                <Menu className="w-5 h-5 text-slate-600" />
+                            <button
+                                className="lg:hidden p-2 rounded-lg border border-slate-200 text-slate-600"
+                                onClick={() => setSidebarOpen(true)}
+                            >
+                                <Menu className="w-5 h-5" />
                             </button>
                             <div>
                                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('driver_dashboard')}</p>
@@ -124,24 +137,10 @@ export default function DriverLayout({ children, title, subtitle }) {
                                 </div>
                             </div>
 
-                            <div className="relative" ref={notificationsRef}>
-                                <button
-                                    onClick={() => setNotificationsOpen(!notificationsOpen)}
-                                    className={`p-2 rounded-lg border ${notificationsOpen ? 'border-blue-200 bg-blue-50 text-blue-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-                                >
-                                    <Bell className="w-5 h-5" />
-                                </button>
-                                {notificationsOpen && (
-                                    <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-lg">
-                                        <div className="px-4 py-3 border-b border-slate-100">
-                                            <h3 className="text-sm font-semibold text-slate-900">{t('notifications')}</h3>
-                                        </div>
-                                        <div className="p-4 text-center text-sm text-slate-500">
-                                            {t('no_notifications') || 'No notifications yet'}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            <NotificationBell 
+                                unreadCount={props?.notifications?.unreadCount || 0}
+                                notifications={props?.notifications?.recent || []}
+                            />
 
                             <div className="relative" ref={userMenuRef}>
                                 <button

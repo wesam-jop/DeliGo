@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderStore;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Store;
+use App\Models\User;
+use App\Models\Area;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -57,106 +60,171 @@ class OrderController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     * يدعم الطلبات من متاجر متعددة
      */
     public function store(Request $request): JsonResponse
     {
+        $user = Auth::user();
+        
+        // التحقق من أن المستخدم لديه محافظة ومنطقة
+        if (!$user->governorate_id || !$user->area_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'يجب تحديد المحافظة والمنطقة في ملفك الشخصي أولاً'
+            ], 400);
+        }
+
         $request->validate([
-            'store_id' => 'required|exists:stores,id',
+            'stores' => 'required|array|min:1',
+            'stores.*.store_id' => 'required|exists:stores,id',
+            'stores.*.items' => 'required|array|min:1',
+            'stores.*.items.*.product_id' => 'required|exists:products,id',
+            'stores.*.items.*.quantity' => 'required|integer|min:1',
             'delivery_address' => 'required|string|max:500',
             'delivery_latitude' => 'required|numeric',
             'delivery_longitude' => 'required|numeric',
             'customer_phone' => 'required|string|max:20',
             'payment_method' => 'required|in:cash,card,wallet',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
+            'location_notes' => 'nullable|string|max:500',
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $store = Store::findOrFail($request->store_id);
+        // التحقق من وجود عامل توصيل متاح في المنطقة
+        // نتحقق من Users مع user_type = 'driver' في نفس المنطقة
+        $availableDriver = User::where('user_type', 'driver')
+            ->where('area_id', $user->area_id)
+            ->where('is_verified', true)
+            ->first();
         
-        if (!$store->is_active) {
+        // يمكن أيضاً التحقق من DeliveryDriver model إذا كان مستخدماً
+        if (!$availableDriver) {
+            $availableDriver = \App\Models\DeliveryDriver::available()
+                ->inArea($user->area_id)
+                ->first();
+        }
+
+        if (!$availableDriver) {
             return response()->json([
                 'success' => false,
-                'message' => 'المتجر غير متاح حالياً'
+                'message' => 'عذراً، لا يوجد عامل توصيل متاح في منطقتك حالياً. لا يمكننا قبول الطلب.'
             ], 400);
         }
 
         $defaultEta = (int) Setting::get('default_estimated_delivery_time', 15);
-        $estimatedDeliveryTime = $store->estimated_delivery_time ?? $defaultEta;
+        $totalSubtotal = 0;
+        $totalDeliveryFee = 0;
+        $storesData = [];
 
         DB::beginTransaction();
         
         try {
-            $subtotal = 0;
-            $orderItems = [];
-
-            // Validate items and calculate subtotal
-            foreach ($request->items as $item) {
-                $product = Product::findOrFail($item['product_id']);
+            // التحقق من صحة المتاجر والمنتجات
+            foreach ($request->stores as $storeData) {
+                $store = Store::findOrFail($storeData['store_id']);
                 
-                if (!$product->is_available) {
-                    throw new \Exception('المنتج ' . $product->name . ' غير متوفر');
+                if (!$store->is_active) {
+                    throw new \Exception('المتجر ' . $store->name . ' غير متاح حالياً');
                 }
 
-                if ($item['quantity'] > $product->stock_quantity) {
-                    throw new \Exception('الكمية المطلوبة من ' . $product->name . ' غير متوفرة');
+                $storeSubtotal = 0;
+                $storeItems = [];
+
+                // التحقق من المنتجات
+                foreach ($storeData['items'] as $item) {
+                    $product = Product::findOrFail($item['product_id']);
+                    
+                    // التأكد من أن المنتج يخص هذا المتجر
+                    if ($product->store_id != $store->id) {
+                        throw new \Exception('المنتج ' . $product->name . ' لا يخص المتجر ' . $store->name);
+                    }
+                    
+                    if (!$product->is_available) {
+                        throw new \Exception('المنتج ' . $product->name . ' غير متوفر');
+                    }
+
+                    if ($item['quantity'] > $product->stock_quantity) {
+                        throw new \Exception('الكمية المطلوبة من ' . $product->name . ' غير متوفرة');
+                    }
+
+                    $itemTotal = $product->price * $item['quantity'];
+                    $storeSubtotal += $itemTotal;
+
+                    $storeItems[] = [
+                        'product' => $product,
+                        'quantity' => $item['quantity'],
+                        'price' => $product->price,
+                        'total' => $itemTotal,
+                    ];
                 }
 
-                $itemTotal = $product->price * $item['quantity'];
-                $subtotal += $itemTotal;
+                $storeDeliveryFee = $store->delivery_fee ?? 0;
+                $totalSubtotal += $storeSubtotal;
+                $totalDeliveryFee += $storeDeliveryFee;
 
-                $orderItems[] = [
-                    'product' => $product,
-                    'quantity' => $item['quantity'],
-                    'price' => $product->price,
-                    'total' => $itemTotal,
+                $storesData[] = [
+                    'store' => $store,
+                    'items' => $storeItems,
+                    'subtotal' => $storeSubtotal,
+                    'delivery_fee' => $storeDeliveryFee,
                 ];
             }
 
-            // Create order
+            // إنشاء الطلب الرئيسي
             $order = Order::create([
-                'user_id' => Auth::id(),
-                'store_id' => $store->id,
-                'status' => 'pending',
-                'subtotal' => $subtotal,
-                'delivery_fee' => $store->delivery_fee ?? 0,
+                'user_id' => $user->id,
+                'store_id' => $storesData[0]['store']->id, // المتجر الأول كمرجع
+                'status' => 'pending_driver_approval', // في انتظار موافقة عامل التوصيل
+                'subtotal' => $totalSubtotal,
+                'delivery_fee' => $totalDeliveryFee,
                 'tax_amount' => 0,
                 'discount_amount' => 0,
-                'total_amount' => $subtotal + ($store->delivery_fee ?? 0),
+                'total_amount' => $totalSubtotal + $totalDeliveryFee,
                 'payment_status' => 'pending',
                 'payment_method' => $request->payment_method,
                 'delivery_address' => $request->delivery_address,
                 'delivery_latitude' => $request->delivery_latitude,
                 'delivery_longitude' => $request->delivery_longitude,
+                'area_id' => $user->area_id,
                 'customer_phone' => $request->customer_phone,
                 'notes' => $request->notes,
-                'estimated_delivery_time' => $estimatedDeliveryTime,
+                'location_notes' => $request->location_notes,
+                'estimated_delivery_time' => $defaultEta,
             ]);
 
-            // Create order items
-            foreach ($orderItems as $item) {
-                OrderItem::create([
+            // إنشاء order_stores و order_items لكل متجر
+            foreach ($storesData as $storeDataItem) {
+                // إنشاء OrderStore
+                OrderStore::create([
                     'order_id' => $order->id,
-                    'product_id' => $item['product']->id,
-                    'product_name' => $item['product']->name,
-                    'product_price' => $item['price'],
-                    'quantity' => $item['quantity'],
-                    'total_price' => $item['total'],
+                    'store_id' => $storeDataItem['store']->id,
+                    'status' => 'pending_store_approval', // في انتظار موافقة المتجر
+                    'subtotal' => $storeDataItem['subtotal'],
+                    'delivery_fee' => $storeDataItem['delivery_fee'],
                 ]);
 
-                // Decrease stock
-                $item['product']->decrement('stock_quantity', $item['quantity']);
+                // إنشاء OrderItems
+                foreach ($storeDataItem['items'] as $item) {
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'store_id' => $storeDataItem['store']->id,
+                        'product_id' => $item['product']->id,
+                        'product_name' => $item['product']->name,
+                        'product_price' => $item['price'],
+                        'quantity' => $item['quantity'],
+                        'total_price' => $item['total'],
+                    ]);
+                    // لا ننقص المخزون الآن - سيتم ذلك عند موافقة عامل التوصيل
+                }
             }
 
             DB::commit();
 
-            $order->load(['store', 'orderItems.product']);
+            $order->load(['stores', 'orderItems.product', 'orderStores.store']);
 
             return response()->json([
                 'success' => true,
                 'data' => $order,
-                'message' => 'تم إنشاء الطلب بنجاح'
+                'message' => 'تم إنشاء الطلب بنجاح وهو في انتظار موافقة عامل التوصيل'
             ], 201);
 
         } catch (\Exception $e) {

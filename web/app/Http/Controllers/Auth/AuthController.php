@@ -71,6 +71,8 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'phone' => 'required|string|unique:users',
             'agree_terms' => 'required|accepted',
+            'governorate_id' => 'required|exists:governorates,id',
+            'city_id' => 'required|exists:cities,id',
         ]);
 
         if ($validator->fails()) {
@@ -103,6 +105,8 @@ class AuthController extends Controller
             'password' => Hash::make('default_password'), // Default password, not used for login
             'user_type' => 'customer',
             'is_verified' => false,
+            'governorate_id' => $request->governorate_id,
+            'city_id' => $request->city_id,
         ]);
 
         // Generate OTP
