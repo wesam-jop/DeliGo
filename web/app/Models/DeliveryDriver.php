@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DeliveryDriver extends Model
@@ -16,6 +17,8 @@ class DeliveryDriver extends Model
         'status',
         'current_latitude',
         'current_longitude',
+        'governorate_id',
+        'area_id',
         'is_active',
         'rating',
         'total_deliveries',
@@ -33,9 +36,29 @@ class DeliveryDriver extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function governorate(): BelongsTo
+    {
+        return $this->belongsTo(Governorate::class);
+    }
+
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(Area::class);
+    }
+
     public function scopeAvailable($query)
     {
         return $query->where('status', 'available')->where('is_active', true);
+    }
+
+    public function scopeInArea($query, $areaId)
+    {
+        return $query->where('area_id', $areaId);
+    }
+
+    public function scopeInGovernorate($query, $governorateId)
+    {
+        return $query->where('governorate_id', $governorateId);
     }
 
     public function scopeActive($query)

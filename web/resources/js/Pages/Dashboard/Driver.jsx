@@ -17,10 +17,30 @@ import DriverLayout from './DriverLayout';
 export default function DriverDashboard({ stats, assignedOrders, availableOrders }) {
     const { t } = useTranslation();
     const statCards = [
-        { label: t('driver_total_deliveries') || 'Total Deliveries', value: stats.total_deliveries, icon: Truck },
-        { label: t('driver_pending_deliveries') || 'On the way', value: stats.pending_deliveries, icon: Clock },
-        { label: t('driver_completed_deliveries') || 'Completed', value: stats.completed_deliveries, icon: CheckCircle },
-        { label: t('driver_total_earnings') || 'Earnings', value: `${stats.total_earnings}`, icon: DollarSign },
+        { 
+            label: t('driver_total_deliveries') || 'Total Deliveries', 
+            value: stats.total_deliveries || 0, 
+            icon: Truck,
+            accent: 'from-blue-500/20 to-blue-500/5 text-blue-700'
+        },
+        { 
+            label: t('driver_pending_deliveries') || 'Active Deliveries', 
+            value: stats.pending_deliveries || 0, 
+            icon: Clock,
+            accent: 'from-amber-500/20 to-amber-500/5 text-amber-700'
+        },
+        { 
+            label: t('driver_completed_deliveries') || 'Completed', 
+            value: stats.completed_deliveries || 0, 
+            icon: CheckCircle,
+            accent: 'from-emerald-500/20 to-emerald-500/5 text-emerald-700'
+        },
+        { 
+            label: t('driver_total_earnings') || 'Total Earnings', 
+            value: `${stats.total_earnings || 0} ${t('currency') || 'SYP'}`, 
+            icon: DollarSign,
+            accent: 'from-purple-500/20 to-purple-500/5 text-purple-700'
+        },
     ];
 
     return (
@@ -30,8 +50,8 @@ export default function DriverDashboard({ stats, assignedOrders, availableOrders
             <div className="space-y-8">
                 <div className="rounded-3xl border border-slate-200 bg-white/70 backdrop-blur shadow-sm p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {statCards.map(({ label, value, icon: Icon }) => (
-                            <div key={label} className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-4 shadow-sm">
+                        {statCards.map(({ label, value, icon: Icon, accent }) => (
+                            <div key={label} className={`rounded-2xl border border-slate-200 bg-gradient-to-br ${accent} p-4 shadow-sm`}>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-xs uppercase tracking-widest text-slate-500">{label}</p>
@@ -43,6 +63,23 @@ export default function DriverDashboard({ stats, assignedOrders, availableOrders
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-center">
+                            <p className="text-xs uppercase tracking-widest text-slate-500 mb-2">{t('today_deliveries') || 'Today'}</p>
+                            <p className="text-2xl font-bold text-slate-900">{stats.today_deliveries ?? 0}</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-center">
+                            <p className="text-xs uppercase tracking-widest text-slate-500 mb-2">{t('this_week') || 'This Week'}</p>
+                            <p className="text-2xl font-bold text-slate-900">{stats.this_week_deliveries ?? 0}</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-center">
+                            <p className="text-xs uppercase tracking-widest text-slate-500 mb-2">{t('this_month_earnings') || 'This Month'}</p>
+                            <p className="text-2xl font-bold text-slate-900">{stats.this_month_earnings ?? 0} {t('currency') || 'SYP'}</p>
+                        </div>
                     </div>
                 </div>
 
@@ -69,23 +106,48 @@ export default function DriverDashboard({ stats, assignedOrders, availableOrders
                                             </span>
                                         </div>
                                         <div className="space-y-2 text-sm text-slate-600">
+                                            {order.customer_name && (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium text-slate-900">{order.customer_name}</span>
+                                                </div>
+                                            )}
                                             <div className="flex items-center gap-2">
                                                 <MapPin className="w-4 h-4 text-slate-400" />
-                                                {order.delivery_address}
+                                                <span className="flex-1">{order.delivery_address}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Phone className="w-4 h-4 text-slate-400" />
-                                                {order.customer_phone}
+                                                <a href={`tel:${order.customer_phone}`} className="text-blue-600 hover:underline">{order.customer_phone}</a>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <DollarSign className="w-4 h-4 text-slate-400" />
-                                                {order.total_amount}
+                                                <span className="font-semibold">{order.total_amount} {t('currency') || 'SYP'}</span>
                                             </div>
                                         </div>
-                                        {order.stores_count > 1 && (
-                                            <div className="text-xs text-blue-600 mb-2 flex items-center gap-1">
-                                                <Package className="w-3 h-3" />
-                                                {t('multiple_stores_order', { count: order.stores_count }) || `${order.stores_count} متاجر`}
+                                        {order.stores && order.stores.length > 0 && (
+                                            <div className="mt-3 pt-3 border-t border-slate-200">
+                                                <div className="text-xs text-slate-500 mb-2">
+                                                    {order.stores.length > 1 
+                                                        ? `${order.stores.length} ${t('stores') || 'متاجر'}` 
+                                                        : t('store') || 'متجر'}
+                                                </div>
+                                                {order.stores.map((store, idx) => (
+                                                    <div key={idx} className="text-xs text-slate-600 mb-1 flex items-center gap-1">
+                                                        <Package className="w-3 h-3 text-blue-600" />
+                                                        <span>{store.name}</span>
+                                                        {store.status && (
+                                                            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                                                                store.status === 'store_approved' ? 'bg-emerald-100 text-emerald-700' :
+                                                                store.status === 'store_preparing' ? 'bg-blue-100 text-blue-700' :
+                                                                'bg-amber-100 text-amber-700'
+                                                            }`}>
+                                                                {store.status === 'store_approved' ? t('approved') || 'موافق' :
+                                                                store.status === 'store_preparing' ? t('preparing') || 'قيد التحضير' :
+                                                                t('pending') || 'في الانتظار'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
                                         <div className="mt-4 flex gap-2">
@@ -133,21 +195,44 @@ export default function DriverDashboard({ stats, assignedOrders, availableOrders
                                             </span>
                                         </div>
                                         <div className="space-y-2 text-sm text-slate-600">
+                                            {order.customer_name && (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium text-slate-900">{order.customer_name}</span>
+                                                </div>
+                                            )}
                                             <div className="flex items-center gap-2">
                                                 <MapPin className="w-4 h-4 text-slate-400" />
-                                                {order.delivery_address}
+                                                <span className="flex-1">{order.delivery_address}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Phone className="w-4 h-4 text-slate-400" />
-                                                {order.customer_phone}
+                                                <a href={`tel:${order.customer_phone}`} className="text-blue-600 hover:underline">{order.customer_phone}</a>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <DollarSign className="w-4 h-4 text-slate-400" />
-                                                {order.total_amount}
+                                                <span className="font-semibold">{order.total_amount} {t('currency') || 'SYP'}</span>
                                             </div>
                                         </div>
-                                        {order.status === 'out_for_delivery' && (
-                                            <button className="mt-4 w-full rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                                        {order.stores && order.stores.length > 0 && (
+                                            <div className="mt-3 pt-3 border-t border-slate-200">
+                                                <div className="text-xs text-slate-500 mb-2">
+                                                    {order.stores.length > 1 
+                                                        ? `${order.stores.length} ${t('stores') || 'متاجر'}` 
+                                                        : t('store') || 'متجر'}
+                                                </div>
+                                                {order.stores.map((store, idx) => (
+                                                    <div key={idx} className="text-xs text-slate-600 mb-1">
+                                                        <Package className="w-3 h-3 text-blue-600 inline mr-1" />
+                                                        <span>{store.name}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {(order.status === 'driver_picked_up' || order.status === 'out_for_delivery') && (
+                                            <button 
+                                                onClick={() => router.post(`/dashboard/driver/orders/${order.id}/complete`, {}, { preserveScroll: true })}
+                                                className="mt-4 w-full rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                                            >
                                                 {t('confirm_delivery') || 'Confirm delivery'}
                                             </button>
                                         )}

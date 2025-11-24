@@ -525,3 +525,30 @@ textarea {
     background-image: url("../js/assets/images/sy.jpg") !important;
     background-size: cover;
 }
+
+/* MapLibre GL Styles */
+.maplibregl-popup-content {
+    padding: 0;
+    border-radius: 0.5rem;
+}
+
+.maplibregl-popup-close-button {
+    padding: 4px;
+    font-size: 18px;
+}
+
+/* Notification Permission Prompt Animation */
+@keyframes slide-up {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+}

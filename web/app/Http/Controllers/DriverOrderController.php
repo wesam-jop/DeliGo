@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use App\Services\NotificationService;
 
 class DriverOrderController extends Controller
 {
@@ -23,19 +24,21 @@ class DriverOrderController extends Controller
         $pendingApprovalOrders = Order::query()
             ->where('status', 'pending_driver_approval')
             ->whereNull('delivery_driver_id')
-            ->whereHas('orderStores.store', function ($query) use ($driver) {
-                // البحث عن طلبات من متاجر في نفس المنطقة
-                if ($driver->city_id) {
-                    $query->where('city_id', $driver->city_id);
+            ->where(function ($query) use ($driver) {
+                // البحث عن طلبات في نفس المنطقة
+                if ($driver->area_id) {
+                    $query->where('area_id', $driver->area_id);
                 } elseif ($driver->governorate_id) {
                     // إذا لم يكن له منطقة محددة، ابحث في نفس المحافظة
-                    $query->where('governorate_id', $driver->governorate_id);
+                    $query->whereHas('user', function ($q) use ($driver) {
+                        $q->where('governorate_id', $driver->governorate_id);
+                    });
                 }
             })
             ->with([
-                'orderStores.store:id,name,address,city_id,governorate_id',
+                'orderStores.store:id,name,address',
                 'user:id,name,phone',
-                'orderItems.store:id,name'
+                'orderItems.product:id,name'
             ])
             ->orderBy('created_at')
             ->get()
@@ -78,7 +81,8 @@ class DriverOrderController extends Controller
 
     /**
      * قبول الطلب من قبل عامل التوصيل
-     * بعد الموافقة، ينتقل الطلب إلى المتجر للتحضير
+     * بعد الموافقة، ينتقل الطلب إلى المتاجر للتحضير
+     * ضمان أن عامل توصيل واحد فقط يمكنه قبول الطلب
      */
     public function accept(Request $request, Order $order)
     {
@@ -88,41 +92,61 @@ class DriverOrderController extends Controller
             abort(403);
         }
 
-        if ($order->status !== 'pending_driver_approval' || $order->delivery_driver_id !== null) {
-            return back()->with('error', __('order_not_available_for_approval'));
-        }
-
-        // قبول الطلب ونقله تلقائياً للمتاجر للتحضير
+        // التحقق من حالة الطلب مع lock للقاعدة لضمان أن عامل توصيل واحد فقط يقبل
         DB::beginTransaction();
         try {
+            // Lock الطلب للتأكد من أن عامل توصيل واحد فقط يمكنه قبوله
+            $order = Order::lockForUpdate()->findOrFail($order->id);
+
+            if ($order->status !== 'pending_driver_approval' || $order->delivery_driver_id !== null) {
+                DB::rollBack();
+                return back()->with('error', 'الطلب غير متاح للقبول أو تم قبوله من قبل عامل توصيل آخر');
+            }
+
+            // تحديث الطلب بقبول عامل التوصيل
             $order->update([
                 'delivery_driver_id' => $driver->id,
-                'status' => 'driver_accepted', // تم قبول الديلفري
+                'status' => 'driver_accepted', // تم قبول عامل التوصيل
             ]);
 
-            // الآن بعد موافقة الديلفري، نقلل المخزون من المنتجات
+            // بعد موافقة عامل التوصيل، نقلل المخزون من المنتجات
             $order->load('orderItems');
             foreach ($order->orderItems as $item) {
-                $product = Product::find($item->product_id);
+                $product = Product::lockForUpdate()->find($item->product_id);
                 if ($product) {
                     // التحقق من أن المخزون كافي
                     if ($product->stock_quantity < $item->quantity) {
                         DB::rollBack();
-                        return back()->with('error', __('insufficient_stock_for_product', ['product' => $item->product_name]));
+                        return back()->with('error', 'الكمية المطلوبة من ' . $item->product_name . ' غير متوفرة في المخزون');
                     }
                     $product->decrement('stock_quantity', $item->quantity);
                 }
             }
 
             // تحديث order_stores لإرسالها للمتاجر
-            // الآن فقط بعد موافقة الديلفري، يتم إرسال الطلب للمتاجر
-            // الحالة تبقى pending_store_approval حتى يبدأ المتجر بالتحضير
+            // الآن فقط بعد موافقة عامل التوصيل، يتم إرسال الطلب للمتاجر
+            // كل متجر سيرى طلباته فقط في pending_store_approval
+            OrderStore::where('order_id', $order->id)
+                ->update(['status' => 'pending_store_approval']);
 
             DB::commit();
-            return back()->with('success', __('order_accepted_successfully'));
+
+            // إرسال إشعار للعميل
+            $notificationService = app(NotificationService::class);
+            $notificationService->notifyOrderStatusChanged($order->user_id, $order);
+
+            // إرسال إشعار لأصحاب المتاجر
+            $order->load('orderStores.store');
+            foreach ($order->orderStores as $orderStore) {
+                if ($orderStore->store && $orderStore->store->owner_id) {
+                    $notificationService->notifyStoreNewOrder($orderStore->store->owner_id, $order);
+                }
+            }
+
+            return back()->with('success', 'تم قبول الطلب بنجاح. تم إرساله للمتاجر للتحضير.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', __('error_accepting_order'));
+            return back()->with('error', 'حدث خطأ أثناء قبول الطلب: ' . $e->getMessage());
         }
     }
 
@@ -163,15 +187,39 @@ class DriverOrderController extends Controller
             return back()->with('error', __('order_not_assigned_to_you'));
         }
 
-        if ($order->status !== 'store_approved') {
-            return back()->with('error', __('store_must_approve_first'));
+        // التحقق من أن جميع المتاجر قبلت الطلب
+        $allStoresApproved = OrderStore::where('order_id', $order->id)
+            ->where('status', '!=', 'store_approved')
+            ->where('status', '!=', 'store_preparing')
+            ->where('status', '!=', 'ready_for_delivery')
+            ->count() === 0;
+
+        if (!$allStoresApproved) {
+            // التحقق من حالة المتاجر
+            $storesStatus = OrderStore::where('order_id', $order->id)
+                ->with('store:id,name')
+                ->get()
+                ->map(fn ($os) => $os->store->name . ': ' . $os->status)
+                ->implode(', ');
+            
+            return back()->with('error', 'يجب أن تقبل جميع المتاجر الطلب أولاً. الحالة الحالية: ' . $storesStatus);
         }
 
+        // التحقق من أن على الأقل متجر واحد جاهز
+        $readyStores = OrderStore::where('order_id', $order->id)
+            ->whereIn('status', ['store_approved', 'store_preparing', 'ready_for_delivery'])
+            ->count();
+
+        if ($readyStores === 0) {
+            return back()->with('error', 'لا يوجد متاجر جاهزة بعد. يرجى الانتظار حتى تقبل المتاجر الطلب.');
+        }
+
+        // تحديث حالة الطلب - جاهز لأخذ الطلب من المتاجر
         $order->update([
             'status' => 'driver_picked_up',
         ]);
 
-        return back()->with('success', __('order_picked_up_successfully'));
+        return back()->with('success', 'تم أخذ الطلب من المتاجر بنجاح');
     }
 
     /**
@@ -207,7 +255,43 @@ class DriverOrderController extends Controller
             'delivered_at' => now(),
         ]);
 
+        // إرسال إشعار للعميل
+        $notificationService = app(NotificationService::class);
+        $notificationService->notifyOrderStatusChanged($order->user_id, $order);
+
         return back()->with('success', __('order_delivered_successfully'));
+    }
+
+    public function show(Request $request, Order $order)
+    {
+        $driver = $request->user();
+
+        if (!$driver || !$driver->isDriver()) {
+            abort(403);
+        }
+
+        // التحقق من أن الطلب مرتبط بهذا السائق
+        if ($order->delivery_driver_id && (int) $order->delivery_driver_id !== (int) $driver->id) {
+            // السماح بعرض الطلبات في انتظار الموافقة أيضاً
+            if ($order->status !== 'pending_driver_approval') {
+                abort(403, 'ليس لديك صلاحية للوصول إلى هذا الطلب');
+            }
+        }
+
+        // تحميل جميع البيانات المطلوبة
+        $order->load([
+            'orderStores.store:id,name,address,latitude,longitude,phone',
+            'orderItems.store:id,name',
+            'orderItems.product:id,name,image',
+            'user:id,name,phone',
+            'store:id,name,address',
+        ]);
+
+        $formattedOrder = $this->formatOrderDetailed($order);
+
+        return Inertia::render('Dashboard/DriverOrderShow', [
+            'order' => $formattedOrder,
+        ]);
     }
 
     private function formatOrder(Order $order): array
@@ -256,6 +340,73 @@ class DriverOrderController extends Controller
             'delivery_longitude' => $order->delivery_longitude,
             'customer_phone' => $order->customer_phone,
             'total_amount' => $order->total_amount,
+            'created_at' => $order->created_at?->toIso8601String(),
+            'delivered_at' => $order->delivered_at?->toIso8601String(),
+        ];
+    }
+
+    private function formatOrderDetailed(Order $order): array
+    {
+        // تجميع المنتجات حسب المتجر مع معلومات إضافية
+        $storesData = [];
+        foreach ($order->orderStores as $orderStore) {
+            $storeItems = $order->orderItems->where('store_id', $orderStore->store_id);
+            $storesData[] = [
+                'id' => $orderStore->store_id,
+                'name' => $orderStore->store->name,
+                'address' => $orderStore->store->address,
+                'latitude' => $orderStore->store->latitude,
+                'longitude' => $orderStore->store->longitude,
+                'phone' => $orderStore->store->phone,
+                'status' => $orderStore->status,
+                'subtotal' => $orderStore->subtotal,
+                'delivery_fee' => $orderStore->delivery_fee,
+                'items' => $storeItems->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->product_name,
+                        'quantity' => $item->quantity,
+                        'price' => $item->product_price,
+                        'total' => $item->total_price,
+                        'product' => $item->product ? [
+                            'id' => $item->product->id,
+                            'name' => $item->product->name,
+                            'image' => $item->product->image,
+                        ] : null,
+                    ];
+                }),
+            ];
+        }
+        
+        return [
+            'id' => $order->id,
+            'order_number' => $order->order_number,
+            'status' => $order->status,
+            'store' => $order->store ? [
+                'id' => $order->store->id,
+                'name' => $order->store->name,
+                'address' => $order->store->address,
+            ] : null,
+            'stores' => $storesData,
+            'stores_count' => count($storesData),
+            'customer' => $order->user ? [
+                'id' => $order->user->id,
+                'name' => $order->user->name,
+                'phone' => $order->user->phone,
+            ] : null,
+            'delivery_address' => $order->delivery_address,
+            'delivery_latitude' => $order->delivery_latitude,
+            'delivery_longitude' => $order->delivery_longitude,
+            'location_notes' => $order->location_notes,
+            'customer_phone' => $order->customer_phone,
+            'notes' => $order->notes,
+            'subtotal' => $order->subtotal,
+            'delivery_fee' => $order->delivery_fee,
+            'total_amount' => $order->total_amount,
+            'payment_method' => $order->payment_method,
+            'payment_status' => $order->payment_status,
+            'estimated_delivery_time' => $order->estimated_delivery_time,
             'created_at' => $order->created_at?->toIso8601String(),
             'delivered_at' => $order->delivered_at?->toIso8601String(),
         ];

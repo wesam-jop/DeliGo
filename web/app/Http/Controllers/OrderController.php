@@ -14,6 +14,7 @@ use App\Models\City;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
 
 class OrderController extends Controller
 {
@@ -194,6 +195,27 @@ class OrderController extends Controller
             $request->session()->forget('cart');
 
             DB::commit();
+
+            // إرسال إشعار للعميل
+            $notificationService = app(NotificationService::class);
+            $notificationService->notifyOrderCreated(Auth::id(), $order);
+
+            // إرسال إشعار للسائقين في نفس المنطقة
+            $drivers = User::where('user_type', 'driver')
+                ->where('is_verified', true)
+                ->where(function($query) use ($order) {
+                    if ($order->area_id) {
+                        $query->where('area_id', $order->area_id);
+                    } elseif (Auth::user()->governorate_id) {
+                        $query->where('governorate_id', Auth::user()->governorate_id);
+                    }
+                })
+                ->pluck('id')
+                ->toArray();
+
+            foreach ($drivers as $driverId) {
+                $notificationService->notifyDriverNewOrder($driverId, $order);
+            }
 
             return redirect()->route('orders.show', $order)
                 ->with('success', __('order_created_successfully'));

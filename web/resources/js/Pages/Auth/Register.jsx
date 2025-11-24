@@ -1,20 +1,46 @@
-import React, { useState } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowRight, User, Sparkles, Store, Truck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { ArrowRight, User, Sparkles, Store, Truck, MapPin } from 'lucide-react';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import Layout from '../Layout';
 import { useTranslation } from '../../hooks/useTranslation';
 
-export default function Register() {
+export default function Register({ governorates = [], areas: initialAreas = [] }) {
     const [isPhoneValid, setIsPhoneValid] = useState(false);
     const { t, locale } = useTranslation();
+    const { props } = usePage();
+    
+    // Get governorates from props if available
+    const safeGovernorates = governorates || props?.governorates || [];
     
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         phone: '',
+        governorate_id: '',
+        city_id: '',
         agree_terms: false
     });
+    
+    // State for cities (areas) filtered by selected governorate
+    const [availableAreas, setAvailableAreas] = useState([]);
+    
+    // Fetch cities when governorate changes
+    useEffect(() => {
+        if (data.governorate_id) {
+            fetch(`/api/v1/cities?governorate_id=${data.governorate_id}`)
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        setAvailableAreas(result.data || []);
+                    }
+                })
+                .catch(err => console.error('Error fetching cities:', err));
+        } else {
+            setAvailableAreas([]);
+            setData('city_id', ''); // Reset city when no governorate selected
+        }
+    }, [data.governorate_id]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -24,9 +50,20 @@ export default function Register() {
     const handlePhoneChange = (value, country) => {
         setData('phone', value);
         // Basic validation - check if phone number is valid
-        const isValid = value && value.length >= 10;
+        // Remove country code from validation - just check if it's a reasonable length
+        const phoneWithoutCode = value.replace(/\D/g, '');
+        const isValid = phoneWithoutCode && phoneWithoutCode.length >= 9;
         setIsPhoneValid(isValid);
     };
+    
+    // Validate phone when it changes via setData
+    useEffect(() => {
+        if (data.phone) {
+            const phoneWithoutCode = data.phone.replace(/\D/g, '');
+            const isValid = phoneWithoutCode && phoneWithoutCode.length >= 9;
+            setIsPhoneValid(isValid);
+        }
+    }, [data.phone]);
 
     const badges = [
         t('register_badge_fast'),
@@ -150,6 +187,73 @@ export default function Register() {
                                 )}
                             </div>
 
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    {t('governorate') || 'المحافظة'} *
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <MapPin className="h-5 w-5 text-slate-400" />
+                                    </div>
+                                    <select
+                                        value={data.governorate_id}
+                                        onChange={(e) => {
+                                            const govId = e.target.value;
+                                            setData('governorate_id', govId);
+                                            setData('city_id', ''); // Reset city when governorate changes
+                                            setAvailableAreas([]); // Clear cities until new ones are loaded
+                                        }}
+                                        className="w-full pl-10 pr-3 py-3 rounded-2xl border border-slate-200 text-slate-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white appearance-none"
+                                        required
+                                        disabled={processing}
+                                    >
+                                        <option value="">{t('select_governorate') || 'اختر المحافظة'}</option>
+                                        {safeGovernorates.map((gov) => (
+                                            <option key={gov.id} value={gov.id}>
+                                                {gov.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {errors.governorate_id && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.governorate_id}</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    {t('area') || 'المنطقة'} *
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <MapPin className="h-5 w-5 text-slate-400" />
+                                    </div>
+                                    <select
+                                        value={data.city_id}
+                                        onChange={(e) => setData('city_id', e.target.value)}
+                                        className="w-full pl-10 pr-3 py-3 rounded-2xl border border-slate-200 text-slate-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white appearance-none disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                        required
+                                        disabled={processing || !data.governorate_id || availableAreas.length === 0}
+                                    >
+                                        <option value="">{t('select_area') || 'اختر المنطقة'}</option>
+                                        {availableAreas.map((area) => (
+                                            <option key={area.id} value={area.id}>
+                                                {area.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {!data.governorate_id && (
+                                    <p className="mt-1 text-xs text-slate-500">{t('select_governorate_first') || 'يرجى اختيار المحافظة أولاً'}</p>
+                                )}
+                                {data.governorate_id && availableAreas.length === 0 && (
+                                    <p className="mt-1 text-xs text-amber-600">{t('no_areas_available') || 'لا توجد مناطق متاحة في هذه المحافظة'}</p>
+                                )}
+                                {errors.city_id && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.city_id}</p>
+                                )}
+                            </div>
+
                             <div className="flex items-start">
                                 <div className="flex items-center h-5">
                                     <input
@@ -182,7 +286,7 @@ export default function Register() {
                             <div>
                                 <button
                                     type="submit"
-                                    disabled={processing || !data.agree_terms || !isPhoneValid}
+                                    disabled={processing || !data.agree_terms || !isPhoneValid || !data.governorate_id || !data.city_id}
                                     className="group relative w-full flex justify-center items-center gap-2 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {processing ? (

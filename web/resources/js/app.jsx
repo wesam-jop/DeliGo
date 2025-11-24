@@ -4,6 +4,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 
 import '../css/app.css'
 import { syncDirectionWithStoredLocale } from './utils/locale'
+import { initializePushNotifications } from './utils/pushNotifications'
 
 syncDirectionWithStoredLocale()
 
@@ -15,6 +16,11 @@ createInertiaApp({
   setup({ el, App, props }) {
     const root = createRoot(el)
     root.render(<App {...props} />)
+    
+    // Initialize Push Notifications if VAPID key is available
+    if (props.vapidPublicKey) {
+      initializePushNotifications(props.vapidPublicKey)
+    }
   },
   progress: {
     color: '#4B5563',

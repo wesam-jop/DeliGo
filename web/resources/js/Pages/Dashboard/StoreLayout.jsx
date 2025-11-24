@@ -8,7 +8,6 @@ import {
     Menu,
     X,
     Search,
-    Bell,
     ChevronDown,
     LogOut,
     HelpCircle,
@@ -16,8 +15,10 @@ import {
     Heart,
     MapPin,
     ClipboardList,
+    Clock,
 } from 'lucide-react';
 import UserAvatar from '../../Components/UserAvatar';
+import NotificationBell from '../../Components/NotificationBell';
 import { useTranslation } from '../../hooks/useTranslation';
 
 export default function StoreLayout({ children, title, subtitle }) {
@@ -28,8 +29,6 @@ export default function StoreLayout({ children, title, subtitle }) {
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
-    const [notificationsOpen, setNotificationsOpen] = useState(false);
-    const notificationsRef = useRef(null);
     const userMenuRef = useRef(null);
 
     const navItems = [
@@ -39,14 +38,12 @@ export default function StoreLayout({ children, title, subtitle }) {
         { label: t('store_nav_customer_orders'), href: '/dashboard/store/my-orders', icon: ClipboardList },
         { label: t('favorite_products_title'), href: '/dashboard/store/favorites', icon: Heart },
         { label: t('delivery_locations_title'), href: '/dashboard/store/locations', icon: MapPin },
+        { label: t('working_hours') || 'أوقات الدوام', href: '/dashboard/store/working-hours', icon: Clock },
         { label: t('profile'), href: '/dashboard/store/profile', icon: Settings },
     ];
 
     useEffect(() => {
         const handleClick = (event) => {
-            if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
-                setNotificationsOpen(false);
-            }
             if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
                 setUserMenuOpen(false);
             }
@@ -136,24 +133,10 @@ export default function StoreLayout({ children, title, subtitle }) {
                                 </div>
                             </div>
 
-                            <div className="relative" ref={notificationsRef}>
-                                <button
-                                    onClick={() => setNotificationsOpen(!notificationsOpen)}
-                                    className={`p-2 rounded-lg border ${notificationsOpen ? 'border-purple-200 bg-purple-50 text-purple-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-                                >
-                                    <Bell className="w-5 h-5" />
-                                </button>
-                                {notificationsOpen && (
-                                    <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-lg">
-                                        <div className="px-4 py-3 border-b border-slate-100">
-                                            <h3 className="text-sm font-semibold text-slate-900">{t('notifications')}</h3>
-                                        </div>
-                                        <div className="p-4 text-center text-sm text-slate-500">
-                                            {t('no_notifications') || 'No notifications yet'}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            <NotificationBell 
+                                unreadCount={props?.notifications?.unreadCount || 0}
+                                notifications={props?.notifications?.recent || []}
+                            />
 
                             <div className="relative" ref={userMenuRef}>
                                 <button

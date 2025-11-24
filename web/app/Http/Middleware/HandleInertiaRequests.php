@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Illuminate\Support\Facades\App;
 use App\Models\Setting;
+use App\Models\Notification;
+use App\Services\NotificationService;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -89,6 +91,29 @@ class HandleInertiaRequests extends Middleware
                     ? $request->user()->favoriteProducts()->pluck('products.id')->toArray()
                     : [],
             ],
+            'notifications' => $request->user() ? [
+                'unreadCount' => Notification::where('user_id', $request->user()->id)
+                    ->where('is_read', false)
+                    ->count(),
+                'recent' => Notification::where('user_id', $request->user()->id)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn($n) => [
+                        'id' => $n->id,
+                        'type' => $n->type,
+                        'title' => $n->title,
+                        'message' => $n->message,
+                        'is_read' => $n->is_read,
+                        'action_url' => $n->action_url,
+                        'icon' => $n->icon,
+                        'created_at' => $n->created_at->toISOString(),
+                    ]),
+            ] : [
+                'unreadCount' => 0,
+                'recent' => [],
+            ],
+            'vapidPublicKey' => config('services.webpush.vapid_public_key'),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

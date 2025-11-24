@@ -1,22 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { useTranslation } from '../../hooks/useTranslation';
 import CustomerLayout from './CustomerLayout';
 import UserAvatar from '../../Components/UserAvatar';
 import { Camera, Loader, Phone, MapPin, User as UserIcon, AlertCircle } from 'lucide-react';
 
-export default function CustomerProfile({ customer }) {
+export default function CustomerProfile({ customer, governorates = [], areas = [] }) {
     const { t } = useTranslation();
     const { props } = usePage();
     const flash = props.flash || {};
     const [avatarPreview, setAvatarPreview] = useState(null);
+    
+    const safeGovernorates = governorates || props?.governorates || [];
+    const safeAreas = areas || props?.areas || [];
+    const [cities, setCities] = useState([]);
 
     const { data, setData, post, processing, errors } = useForm({
         name: customer?.name || '',
         phone: customer?.phone || '',
         address: customer?.address || '',
+        governorate_id: customer?.governorate_id || '',
+        area_id: customer?.area_id || '',
         avatar: null,
     });
+    
+    // Fetch cities when governorate changes
+    useEffect(() => {
+        if (data.governorate_id) {
+            fetch(`/api/v1/cities?governorate_id=${data.governorate_id}`)
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        setCities(result.data || []);
+                    }
+                })
+                .catch(err => console.error('Error fetching cities:', err));
+        }
+    }, [data.governorate_id]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -115,6 +135,58 @@ export default function CustomerProfile({ customer }) {
                                     />
                                 </div>
                                 {errors.phone && <p className="text-sm text-rose-600 mt-1">{errors.phone}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-900 mb-2">
+                                    {t('governorate') || 'المحافظة'}*
+                                </label>
+                                <div className="relative">
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <select
+                                        value={data.governorate_id}
+                                        onChange={(e) => {
+                                            setData('governorate_id', e.target.value);
+                                            setData('area_id', ''); // Reset area when governorate changes
+                                        }}
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-11 py-3 text-slate-900 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 appearance-none"
+                                        required
+                                    >
+                                        <option value="">{t('select_governorate') || 'اختر المحافظة'}</option>
+                                        {safeGovernorates.map((gov) => (
+                                            <option key={gov.id} value={gov.id}>
+                                                {gov.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {errors.governorate_id && <p className="text-sm text-rose-600 mt-1">{errors.governorate_id}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-900 mb-2">
+                                    {t('area') || 'المنطقة'}*
+                                </label>
+                                <div className="relative">
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <select
+                                        value={data.area_id}
+                                        onChange={(e) => setData('area_id', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-11 py-3 text-slate-900 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 appearance-none"
+                                        required
+                                        disabled={!data.governorate_id}
+                                    >
+                                        <option value="">{t('select_area') || 'اختر المنطقة'}</option>
+                                        {safeAreas
+                                            .filter(area => !data.governorate_id || area.city === data.governorate_id)
+                                            .map((area) => (
+                                                <option key={area.id} value={area.id}>
+                                                    {area.name}
+                                                </option>
+                                            ))}
+                                    </select>
+                                </div>
+                                {errors.area_id && <p className="text-sm text-rose-600 mt-1">{errors.area_id}</p>}
                             </div>
 
                             <div>

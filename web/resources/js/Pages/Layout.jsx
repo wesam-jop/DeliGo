@@ -22,10 +22,12 @@ import {
     X
 } from 'lucide-react';
 import UserAvatar from '../Components/UserAvatar';
+import NotificationPermissionPrompt from '../Components/NotificationPermissionPrompt';
 
 export default function Layout({ children }) {
     const { props, url } = usePage();
     const { t, locale } = useTranslation();
+    const isRTL = locale === 'ar';
     const cartCount = props.cartCount || 0;
     const user = props?.auth?.user;
     const settings = props?.settings || {};
@@ -70,7 +72,7 @@ export default function Layout({ children }) {
             <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-purple-600 transition-colors ${
+                className={`flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-purple-600 transition-colors ${isRTL ? 'flex-row-reverse text-right' : ''} ${
                     variant === 'mobile' ? 'py-2' : ''
                 }`}
             >
@@ -83,8 +85,8 @@ export default function Layout({ children }) {
     const renderAuthSection = (variant = 'desktop') => {
         if (user) {
             return (
-                <div className={`flex ${variant === 'mobile' ? 'flex-col gap-3' : 'items-center gap-3'}`}>
-                    <div className="flex items-center gap-2">
+                <div className={`flex ${variant === 'mobile' ? 'flex-col gap-3' : 'items-center gap-3'} ${isRTL && variant !== 'mobile' ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
                         <UserAvatar user={user} size={36} className="flex-shrink-0" />
                         <span className="text-sm text-slate-700 font-medium">{user.name}</span>
                     </div>
@@ -92,7 +94,7 @@ export default function Layout({ children }) {
                         href={user.user_type === 'admin' ? '/admin/dashboard' : 
                               user.user_type === 'store_owner' ? '/dashboard/store' :
                               user.user_type === 'driver' ? '/dashboard/driver' : '/dashboard/customer'}
-                        className="flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                        className={`flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium ${isRTL ? 'flex-row-reverse' : ''}`}
                     >
                         <User className="w-4 h-4" />
                         <span>{t('dashboard')}</span>
@@ -100,7 +102,7 @@ export default function Layout({ children }) {
                     <Link
                         href="/logout"
                         method="post"
-                        className="flex items-center justify-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium"
+                        className={`flex items-center justify-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium ${isRTL ? 'flex-row-reverse' : ''}`}
                     >
                         <LogOut className="w-4 h-4" />
                         <span>{t('logout')}</span>
@@ -112,7 +114,7 @@ export default function Layout({ children }) {
         return (
             <Link
                 href="/login"
-                className={`flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium ${variant === 'mobile' ? 'w-full' : ''}`}
+                className={`flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium ${variant === 'mobile' ? 'w-full' : ''} ${isRTL ? 'flex-row-reverse' : ''}`}
             >
                 <LogIn className="w-4 h-4" />
                 <span>{t('login')}</span>
@@ -123,10 +125,10 @@ export default function Layout({ children }) {
     return (
         <div className="min-h-screen bg-slate-50">
             {/* Header */}
-            <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
+            <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40" dir={isRTL ? 'rtl' : 'ltr'}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4 gap-4">
-                        <div className="flex items-center gap-3">
+                    <div className={`flex justify-between items-center py-4 gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <button
                                 type="button"
                                 className="md:hidden inline-flex items-center justify-center rounded-md border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -162,11 +164,11 @@ export default function Layout({ children }) {
                             </Link>
                         </div>
                         
-                        <nav className="hidden md:flex items-center gap-6">
+                        <nav className={`hidden md:flex items-center gap-6 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
                             {renderNavLinks()}
                         </nav>
                         
-                        <div className="flex items-center gap-4">
+                        <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <div className="hidden md:block">
                                 <LanguageSwitcher currentLocale={locale} />
                             </div>
@@ -178,7 +180,7 @@ export default function Layout({ children }) {
                                     </span>
                                 )}
                             </Link>
-                            <div className="hidden md:flex items-center gap-3">
+                            <div className={`hidden md:flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                                 {renderAuthSection()}
                             </div>
                         </div>
@@ -199,6 +201,13 @@ export default function Layout({ children }) {
             <main>
                 {children}
             </main>
+
+            {/* Notification Permission Prompt - Only show for authenticated users */}
+            {user && props?.vapidPublicKey && (
+                <NotificationPermissionPrompt 
+                    vapidPublicKey={props.vapidPublicKey}
+                />
+            )}
 
             {/* Footer */}
             <footer className="bg-slate-900 text-white py-12 ">

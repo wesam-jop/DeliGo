@@ -80,6 +80,11 @@ class Store extends Model
         return $this->belongsTo(City::class);
     }
 
+    public function workingHours(): HasMany
+    {
+        return $this->hasMany(StoreWorkingHour::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

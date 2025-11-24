@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import Layout from './Layout';
 import { useTranslation } from '../hooks/useTranslation';
 import AppDownloadSection from '../Components/AppDownloadSection';

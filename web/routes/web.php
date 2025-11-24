@@ -20,6 +20,9 @@ use App\Http\Controllers\DriverOrderController;
 use App\Http\Controllers\StoreOrderController;
 use App\Http\Controllers\Admin\StoreTypeController;
 use App\Http\Controllers\Admin\DriverApplicationController as AdminDriverApplicationController;
+use App\Http\Controllers\Dashboard\StoreWorkingHoursController;
+use App\Http\Controllers\Dashboard\DriverWorkingHoursController;
+use App\Http\Controllers\NotificationController;
 use App\Models\Setting;
 
 // Language switching
@@ -205,7 +208,27 @@ Route::get('/login', function () {
 })->name('login')->middleware('guest');
 
 Route::get('/register', function () {
-    return Inertia::render('Auth/Register');
+    $governorates = \App\Models\Governorate::active()
+        ->orderBy('display_order')
+        ->get()
+        ->map(fn ($gov) => [
+            'id' => $gov->id,
+            'name' => app()->getLocale() === 'ar' ? $gov->name_ar : $gov->name_en,
+        ]);
+
+    $areas = \App\Models\Area::active()
+        ->ordered()
+        ->get()
+        ->map(fn ($area) => [
+            'id' => $area->id,
+            'name' => app()->getLocale() === 'ar' ? $area->name : ($area->name_en ?? $area->name),
+            'city' => app()->getLocale() === 'ar' ? $area->city : ($area->city_en ?? $area->city),
+        ]);
+
+    return Inertia::render('Auth/Register', [
+        'governorates' => $governorates,
+        'areas' => $areas,
+    ]);
 })->name('register')->middleware('guest');
 
 Route::get('/verify-phone', function () {
@@ -443,6 +466,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/store/my-orders', [DashboardController::class, 'storeMyOrders'])->name('dashboard.store.my-orders');
     Route::get('/dashboard/store/favorites', [DashboardController::class, 'storeFavorites'])->name('dashboard.store.favorites');
     Route::get('/dashboard/store/locations', [DeliveryLocationController::class, 'storeIndex'])->name('dashboard.store.locations');
+    Route::get('/dashboard/store/working-hours', [StoreWorkingHoursController::class, 'index'])->name('dashboard.store.working-hours');
+    Route::put('/dashboard/store/working-hours', [StoreWorkingHoursController::class, 'update'])->name('dashboard.store.working-hours.update');
     Route::get('/dashboard/store/profile', [DashboardController::class, 'editStoreProfile'])->name('dashboard.store.profile');
     Route::post('/dashboard/store/profile', [DashboardController::class, 'updateStoreProfile'])->name('dashboard.store.profile.update');
     Route::get('/dashboard/admin', [DashboardController::class, 'admin'])->name('dashboard.admin');
@@ -450,10 +475,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/driver/apply', [DriverApplicationController::class, 'create'])->name('dashboard.driver.apply');
     Route::post('/dashboard/driver/apply', [DriverApplicationController::class, 'store'])->name('dashboard.driver.apply.store');
     Route::get('/dashboard/driver/orders', [DriverOrderController::class, 'index'])->name('dashboard.driver.orders');
+    Route::get('/dashboard/driver/orders/{order}', [DriverOrderController::class, 'show'])->name('dashboard.driver.orders.show');
     Route::post('/dashboard/driver/orders/{order}/accept', [DriverOrderController::class, 'accept'])->name('dashboard.driver.orders.accept');
     Route::post('/dashboard/driver/orders/{order}/reject', [DriverOrderController::class, 'reject'])->name('dashboard.driver.orders.reject');
     Route::post('/dashboard/driver/orders/{order}/claim', [DriverOrderController::class, 'claim'])->name('dashboard.driver.orders.claim');
     Route::post('/dashboard/driver/orders/{order}/complete', [DriverOrderController::class, 'complete'])->name('dashboard.driver.orders.complete');
+    Route::get('/dashboard/driver/working-hours', [DriverWorkingHoursController::class, 'index'])->name('dashboard.driver.working-hours');
+    Route::put('/dashboard/driver/working-hours', [DriverWorkingHoursController::class, 'update'])->name('dashboard.driver.working-hours.update');
     Route::get('/dashboard/driver/profile', [DashboardController::class, 'editDriverProfile'])->name('dashboard.driver.profile');
     Route::post('/dashboard/driver/profile', [DashboardController::class, 'updateDriverProfile'])->name('dashboard.driver.profile.update');
     Route::post('/dashboard/upgrade-role', [UserRoleController::class, 'upgrade'])->name('dashboard.upgrade-role');
@@ -464,4 +492,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/store-orders/{orderStore}/finish-preparing', [StoreOrderController::class, 'finishPreparing'])->name('store-orders.finish-preparing');
     Route::post('/store-orders/{orderStore}/approve', [StoreOrderController::class, 'approve'])->name('store-orders.approve');
     Route::post('/store-orders/{orderStore}/reject', [StoreOrderController::class, 'reject'])->name('store-orders.reject');
+    
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
+    Route::get('/notifications/recent', [NotificationController::class, 'getRecent'])->name('notifications.recent');
+    
+    // Push Notifications
+    Route::post('/notifications/subscribe', [NotificationController::class, 'subscribe'])->name('notifications.subscribe');
+    Route::post('/notifications/unsubscribe', [NotificationController::class, 'unsubscribe'])->name('notifications.unsubscribe');
 });

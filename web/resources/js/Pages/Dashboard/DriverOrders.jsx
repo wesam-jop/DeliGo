@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import DriverLayout from './DriverLayout';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useGeneralSettings } from '../../hooks/useGeneralSettings';
@@ -57,7 +57,7 @@ export default function DriverOrders({ pendingApprovalOrders = [], acceptedOrder
                                         primaryActionLabel={t('accept_order')}
                                         primaryActionVariant="primary"
                                         onPrimaryAction={() => router.post(`/dashboard/driver/orders/${order.id}/accept`, {}, { preserveScroll: true })}
-                                        showSecondary={false}
+                                        showSecondary={true}
                                     />
                                 ))}
                             </div>
@@ -86,6 +86,7 @@ export default function DriverOrders({ pendingApprovalOrders = [], acceptedOrder
                                         primaryActionLabel={t('confirm_delivery')}
                                         primaryActionVariant="success"
                                         onPrimaryAction={() => handleComplete(order.id)}
+                                        showSecondary={true}
                                     />
                                 ))}
                             </div>
@@ -128,22 +129,33 @@ export default function DriverOrders({ pendingApprovalOrders = [], acceptedOrder
 
                 <Card title={t('driver_recent_deliveries')} count={recentCompletedOrders.length} icon={CheckCircle}>
                     {recentCompletedOrders.length ? (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {recentCompletedOrders.map((order) => (
                                 <div
                                     key={order.id}
-                                    className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-4 py-3 flex flex-wrap items-center justify-between gap-3"
+                                    className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 space-y-3"
                                 >
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-900">#{order.order_number}</p>
-                                        <p className="text-xs text-slate-500">{order.store?.name}</p>
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-sm font-semibold text-slate-900">#{order.order_number}</p>
+                                            <p className="text-xs text-slate-500">{order.store?.name}</p>
+                                        </div>
+                                        <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700">
+                                            {t('delivered') || 'Delivered'}
+                                        </span>
                                     </div>
-                                    <p className="text-sm font-semibold text-slate-900">
-                                        {formatCurrency(order.total_amount)}
-                                    </p>
-                                    <p className="text-xs text-slate-500">
-                                        {order.delivered_at ? formatDateTime(order.delivered_at) : '--'}
-                                    </p>
+                                    <div className="space-y-2 text-sm text-slate-600">
+                                        <InfoRow icon={DollarSign} text={formatCurrency(order.total_amount)} />
+                                        {order.delivered_at && (
+                                            <InfoRow icon={Clock} text={formatDateTime(order.delivered_at)} />
+                                        )}
+                                    </div>
+                                    <Link
+                                        href={`/dashboard/driver/orders/${order.id}`}
+                                        className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 text-center transition-colors"
+                                    >
+                                        {t('view_details') || 'View Details'}
+                                    </Link>
                                 </div>
                             ))}
                         </div>
@@ -231,12 +243,12 @@ function OrderCard({
                         </button>
                     )}
                     {showSecondary && (
-                        <button
-                            type="button"
-                            className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                        <Link
+                            href={`/dashboard/driver/orders/${order.id}`}
+                            className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 text-center"
                         >
                             {t('view_details')}
-                        </button>
+                        </Link>
                     )}
                 </div>
             )}
