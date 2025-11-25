@@ -7,8 +7,8 @@ export default function CTASection({
     primaryButton, 
     secondaryButton, 
     icon: Icon,
-    gradientFrom = "from-purple-600", 
-    gradientTo = "to-purple-800", 
+    gradientFrom = "from-primary-600", 
+    gradientTo = "to-primary-800", 
     className = "",
     centered = true
 }) {
@@ -40,7 +40,7 @@ export default function CTASection({
                         {primaryButton && (
                             <Link
                                 href={primaryButton.href}
-                                className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-purple-600 bg-white hover:bg-gray-50 transition-colors"
+                                className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary-600 bg-white hover:bg-secondary-50 transition-colors"
                             >
                                 {primaryButton.icon && <primaryButton.icon className="w-5 h-5 mr-2" />}
                                 {primaryButton.text}
@@ -50,7 +50,7 @@ export default function CTASection({
                         {secondaryButton && (
                             <Link
                                 href={secondaryButton.href}
-                                className="inline-flex items-center justify-center px-8 py-3 border-2 border-white text-base font-medium rounded-md text-white hover:bg-white hover:text-purple-600 transition-colors"
+                                className="inline-flex items-center justify-center px-8 py-3 border-2 border-white text-base font-medium rounded-md text-white hover:bg-white hover:text-primary-600 transition-colors"
                             >
                                 {secondaryButton.icon && <secondaryButton.icon className="w-5 h-5 mr-2" />}
                                 {secondaryButton.text}

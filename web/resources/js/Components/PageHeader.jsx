@@ -59,10 +59,10 @@ export default function PageHeader({
                                     onClick={action.onClick}
                                     className={`inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md transition-colors ${
                                         action.variant === 'primary'
-                                            ? 'bg-purple-600 text-white hover:bg-purple-700'
+                                            ? 'bg-primary-600 text-white hover:bg-primary-700'
                                             : action.variant === 'secondary'
-                                            ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            ? 'bg-white text-primary-800 border-secondary-300 hover:bg-secondary-50'
+                                            : 'bg-secondary-100 text-primary-800 hover:bg-secondary-200'
                                     }`}
                                 >
                                     {action.icon && <action.icon className="w-4 h-4 mr-2" />}

@@ -37,27 +37,27 @@ export default function ProductCard({ product, showAddToCart = true }) {
                 </div>
             )}
             <Link href={`/products/${product.id}`}>
-                <div className="aspect-square bg-slate-100 flex items-center justify-center p-4">
-                    <Package className="w-16 h-16 text-purple-600 group-hover:scale-110 transition-transform duration-200" />
+                <div className="aspect-square bg-secondary-50 flex items-center justify-center p-4">
+                    <Package className="w-16 h-16 text-primary-600 group-hover:scale-110 transition-transform duration-200" />
                 </div>
                 <div className="p-4">
-                    <h3 className="font-semibold text-slate-900 mb-1 group-hover:text-purple-600 transition-colors">
+                    <h3 className="font-semibold text-primary-900 mb-1 group-hover:text-primary-600 transition-colors">
                         {product.name}
                     </h3>
-                    <p className="text-sm text-slate-600 mb-2 line-clamp-2">
+                    <p className="text-sm text-secondary-600 mb-2 line-clamp-2">
                         {product.description}
                     </p>
                     
                     {/* Store Information */}
                     {product.store && (
-                        <div className="mb-2 pt-2 border-t border-slate-100">
-                            <div className="flex items-center gap-1.5 text-xs text-slate-600 mb-1">
-                                <Store className="w-3.5 h-3.5 text-purple-500" />
-                                <span className="font-medium text-slate-700">{product.store.name}</span>
+                        <div className="mb-2 pt-2 border-t border-secondary-200">
+                            <div className="flex items-center gap-1.5 text-xs text-secondary-600 mb-1">
+                                <Store className="w-3.5 h-3.5 text-primary-500" />
+                                <span className="font-medium text-primary-800">{product.store.name}</span>
                             </div>
                             {product.store.governorate && product.store.city && (
-                                <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                <div className="flex items-center gap-1.5 text-xs text-secondary-500">
+                                    <MapPin className="w-3.5 h-3.5 text-secondary-400" />
                                     <span>
                                         {locale === 'ar' 
                                             ? `${product.store.city.name_ar}، ${product.store.governorate.name_ar}`
@@ -71,12 +71,12 @@ export default function ProductCard({ product, showAddToCart = true }) {
                     
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-1">
-                            <DollarSign className="w-4 h-4 text-green-600" />
-                            <span className="text-lg font-bold text-purple-600">
+                            <DollarSign className="w-4 h-4 text-success-600" />
+                            <span className="text-lg font-bold text-primary-600">
                                 {product.price}
                             </span>
                         </div>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-secondary-500">
                             {product.unit}
                         </span>
                     </div>
@@ -87,7 +87,7 @@ export default function ProductCard({ product, showAddToCart = true }) {
                 <div className="px-4 pb-4">
                     <button
                         onClick={handleAddToCart}
-                        className="w-full flex items-center justify-center space-x-2 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
+                        className="w-full flex items-center justify-center space-x-2 bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         <span>{t('add_to_cart')}</span>

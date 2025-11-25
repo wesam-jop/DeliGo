@@ -72,7 +72,7 @@ export default function Layout({ children }) {
             <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-purple-600 transition-colors ${isRTL ? 'flex-row-reverse text-right' : ''} ${
+                className={`flex items-center gap-2 text-sm font-medium text-primary-800 hover:text-primary-600 transition-colors ${isRTL ? 'flex-row-reverse text-right' : ''} ${
                     variant === 'mobile' ? 'py-2' : ''
                 }`}
             >
@@ -88,13 +88,13 @@ export default function Layout({ children }) {
                 <div className={`flex ${variant === 'mobile' ? 'flex-col gap-3' : 'items-center gap-3'} ${isRTL && variant !== 'mobile' ? 'flex-row-reverse' : ''}`}>
                     <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
                         <UserAvatar user={user} size={36} className="flex-shrink-0" />
-                        <span className="text-sm text-slate-700 font-medium">{user.name}</span>
+                        <span className="text-sm text-primary-800 font-medium">{user.name}</span>
                     </div>
                     <Link
                         href={user.user_type === 'admin' ? '/admin/dashboard' : 
                               user.user_type === 'store_owner' ? '/dashboard/store' :
                               user.user_type === 'driver' ? '/dashboard/driver' : '/dashboard/customer'}
-                        className={`flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium ${isRTL ? 'flex-row-reverse' : ''}`}
+                        className={`flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium ${isRTL ? 'flex-row-reverse' : ''}`}
                     >
                         <User className="w-4 h-4" />
                         <span>{t('dashboard')}</span>
@@ -102,7 +102,7 @@ export default function Layout({ children }) {
                     <Link
                         href="/logout"
                         method="post"
-                        className={`flex items-center justify-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium ${isRTL ? 'flex-row-reverse' : ''}`}
+                        className={`flex items-center justify-center gap-2 bg-secondary-600 text-white px-4 py-2 rounded-lg hover:bg-secondary-700 transition-colors text-sm font-medium ${isRTL ? 'flex-row-reverse' : ''}`}
                     >
                         <LogOut className="w-4 h-4" />
                         <span>{t('logout')}</span>
@@ -114,7 +114,7 @@ export default function Layout({ children }) {
         return (
             <Link
                 href="/login"
-                className={`flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium ${variant === 'mobile' ? 'w-full' : ''} ${isRTL ? 'flex-row-reverse' : ''}`}
+                className={`flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium ${variant === 'mobile' ? 'w-full' : ''} ${isRTL ? 'flex-row-reverse' : ''}`}
             >
                 <LogIn className="w-4 h-4" />
                 <span>{t('login')}</span>
@@ -123,15 +123,15 @@ export default function Layout({ children }) {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-white">
             {/* Header */}
-            <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40" dir={isRTL ? 'rtl' : 'ltr'}>
+            <header className="bg-white shadow-sm border-b border-secondary-200 sticky top-0 z-40" dir={isRTL ? 'rtl' : 'ltr'}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className={`flex justify-between items-center py-4 gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
                         <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <button
                                 type="button"
-                                className="md:hidden inline-flex items-center justify-center rounded-md border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                className="md:hidden inline-flex items-center justify-center rounded-md border border-secondary-200 p-2 text-primary-800 hover:bg-secondary-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 onClick={() => setMobileMenuOpen((prev) => !prev)}
                                 aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                                 aria-expanded={mobileMenuOpen}
@@ -152,12 +152,12 @@ export default function Layout({ children }) {
                                                 }
                                             }}
                                         />
-                                        <span className="text-2xl font-bold text-purple-600 whitespace-nowrap" style={{ display: 'none' }}>
+                                        <span className="text-2xl font-bold text-primary-600 whitespace-nowrap" style={{ display: 'none' }}>
                                             {settings?.site_name || 'Getir Clone'}
                                         </span>
                                     </>
                                 ) : (
-                                    <span className="text-2xl font-bold text-purple-600 whitespace-nowrap">
+                                    <span className="text-2xl font-bold text-primary-600 whitespace-nowrap">
                                         {settings?.site_name || 'Getir Clone'}
                                     </span>
                                 )}
@@ -172,10 +172,10 @@ export default function Layout({ children }) {
                             <div className="hidden md:block">
                                 <LanguageSwitcher currentLocale={locale} />
                             </div>
-                            <Link href="/cart" className="relative p-2 text-slate-700 hover:text-purple-600 transition-colors">
+                            <Link href="/cart" className="relative p-2 text-primary-800 hover:text-primary-600 transition-colors">
                                 <ShoppingCart className="w-6 h-6" />
                                 {cartCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                    <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                                         {cartCount}
                                     </span>
                                 )}
@@ -186,7 +186,7 @@ export default function Layout({ children }) {
                         </div>
                     </div>
                     {mobileMenuOpen && (
-                        <div className="md:hidden border-t border-slate-100 pt-4 pb-6 space-y-6">
+                        <div className="md:hidden border-t border-secondary-200 pt-4 pb-6 space-y-6">
                             <nav className="flex flex-col gap-2">
                                 {renderNavLinks('mobile')}
                             </nav>
@@ -210,18 +210,18 @@ export default function Layout({ children }) {
             )}
 
             {/* Footer */}
-            <footer className="bg-slate-900 text-white py-12 ">
+            <footer className="bg-primary-900 text-white py-12 ">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid md:grid-cols-4 gap-8">
                         <div>
                             <h3 className="text-lg font-semibold mb-4">{settings?.site_name || 'Getir Clone'}</h3>
-                            <p className="text-slate-400">
+                            <p className="text-secondary-200">
                                 {settings?.site_description || t('footer_description')}
                             </p>
                         </div>
                         <div>
                             <h4 className="font-semibold mb-4">{t('quick_links')}</h4>
-                            <ul className="space-y-2 text-slate-400">
+                            <ul className="space-y-2 text-secondary-200">
                                 <li><Link href="/about" className="hover:text-white transition-colors">{t('about_us')}</Link></li>
                                 <li><Link href="/contact" className="hover:text-white transition-colors">{t('contact_us')}</Link></li>
                                 <li><Link href="/careers" className="hover:text-white transition-colors">{t('careers')}</Link></li>
@@ -231,7 +231,7 @@ export default function Layout({ children }) {
                         </div>
                         <div>
                             <h4 className="font-semibold mb-4">{t('services')}</h4>
-                            <ul className="space-y-2 text-slate-400">
+                            <ul className="space-y-2 text-secondary-200">
                                 {/* <li><Link href="/services/grocery-delivery" className="flex items-center space-x-2 hover:text-white transition-colors"><Store className="w-4 h-4" /><span>{t('grocery_delivery')}</span></Link></li>
                                 <li><Link href="/services/food-delivery" className="flex items-center space-x-2 hover:text-white transition-colors"><Truck className="w-4 h-4" /><span>{t('food_delivery')}</span></Link></li>
                                 <li><Link href="/services/pharmacy" className="flex items-center space-x-2 hover:text-white transition-colors"><Heart className="w-4 h-4" /><span>{t('pharmacy')}</span></Link></li>
@@ -240,13 +240,13 @@ export default function Layout({ children }) {
                         </div>
                         <div>
                             <h4 className="font-semibold mb-4">{t('download_app')}</h4>
-                            <Link href="/download-app" className="flex items-center justify-center space-x-2 w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                            <Link href="/download-app" className="flex items-center justify-center space-x-2 w-full bg-white text-primary-900 py-3 px-4 rounded-lg hover:bg-secondary-50 transition-colors">
                                 <Smartphone className="w-5 h-5" />
                                 <span>{t('download_app')}</span>
                             </Link>
                         </div>
                     </div>
-                    <div className="border-t border-slate-800 mt-8 pt-8 text-center text-slate-400">
+                    <div className="border-t border-primary-800 mt-8 pt-8 text-center text-secondary-200">
                         <p>&copy; 2024 {settings?.site_name || 'Getir Clone'}. {t('all_rights_reserved')}</p>
                     </div>
                 </div>

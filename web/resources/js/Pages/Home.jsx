@@ -102,27 +102,27 @@ export default function Home({ categories, featuredProducts, featuredStores = []
             </Head>
 
                 {/* Hero Section */}
-                <section className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-slate-900 to-purple-900 text-white">
-                    <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_transparent_55%)] pointer-events-none" aria-hidden="true" />
+                <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-800 to-primary-950 text-white">
+                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.15),_transparent_55%)] pointer-events-none" aria-hidden="true" />
                     <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
                         <div className="text-center space-y-6">
                             <h1 className="text-4xl md:text-6xl font-bold leading-tight">
                                 {t('welcome_title')}
                             </h1>
-                            <p className="text-xl md:text-2xl text-purple-100">
+                            <p className="text-xl md:text-2xl text-secondary-200">
                                 {t('welcome_subtitle')}
                             </p>
                             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                                 <Link 
                                     href="/products" 
-                                    className="flex items-center justify-center gap-2 bg-white text-slate-900 px-6 sm:px-8 py-3 rounded-full font-semibold hover:bg-purple-100 transition-colors text-center shadow-xl shadow-purple-900/40"
+                                    className="flex items-center justify-center gap-2 bg-white text-primary-900 px-6 sm:px-8 py-3 rounded-full font-semibold hover:bg-secondary-50 transition-colors text-center shadow-xl shadow-primary-900/40"
                                 >
                                     <ShoppingCart className="w-5 h-5" />
                                     <span>{t('start_shopping')}</span>
                                 </Link>
                                 <Link 
                                     href="/download-app" 
-                                    className="flex items-center justify-center gap-2 border-2 border-white/70 text-white px-6 sm:px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-slate-900 transition-colors"
+                                    className="flex items-center justify-center gap-2 border-2 border-white/70 text-white px-6 sm:px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-primary-900 transition-colors"
                                 >
                                     <Smartphone className="w-5 h-5" />
                                     <span>{t('download_app')}</span>
@@ -133,16 +133,16 @@ export default function Home({ categories, featuredProducts, featuredStores = []
                 </section>
 
                 {/* Features Section */}
-                <section className="py-16 bg-slate-950 text-slate-100">
+                <section className="py-16 bg-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-12 max-w-3xl mx-auto">
-                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-1 text-sm font-semibold text-purple-100 mb-4">
+                            <span className="inline-flex items-center rounded-full border border-primary-200 bg-primary-50 px-4 py-1 text-sm font-semibold text-primary-700 mb-4">
                                 {t('why_choose_us')}
                             </span>
-                            <h2 className="text-3xl font-bold text-white mb-4">
+                            <h2 className="text-3xl font-bold text-primary-900 mb-4">
                                 {t('why_choose_us')}
                             </h2>
-                            <p className="text-lg text-slate-300">
+                            <p className="text-lg text-secondary-700">
                                 {t('why_choose_subtitle')}
                             </p>
                         </div>
@@ -151,13 +151,13 @@ export default function Home({ categories, featuredProducts, featuredStores = []
                             {coreFeatures.map(({ icon: Icon, title, description }) => (
                                 <div 
                                     key={title} 
-                                    className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center shadow-lg shadow-black/40 backdrop-blur transition hover:-translate-y-1 hover:border-purple-400/30 hover:shadow-purple-900/40"
+                                    className="rounded-2xl border border-secondary-200 bg-white p-8 text-center shadow-lg shadow-secondary-200/20 transition hover:-translate-y-1 hover:border-primary-300 hover:shadow-primary-200/30"
                                 >
-                                    <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-purple-500/10 text-purple-200">
+                                    <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-primary-700">
                                         <Icon className="w-7 h-7" />
                                     </div>
-                                    <h3 className="text-xl font-semibold text-white mb-2">{title}</h3>
-                                    <p className="text-slate-300 text-sm">{description}</p>
+                                    <h3 className="text-xl font-semibold text-primary-900 mb-2">{title}</h3>
+                                    <p className="text-secondary-600 text-sm">{description}</p>
                                 </div>
                             ))}
                         </div>
@@ -166,16 +166,16 @@ export default function Home({ categories, featuredProducts, featuredStores = []
 
                 {/* Categories Section */}
                 {categories && categories.length > 0 && (
-                    <section className="py-16 bg-slate-900 text-slate-100">
+                    <section className="py-16 bg-secondary-50">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="text-center mb-12 max-w-3xl mx-auto">
-                                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-1 text-sm font-semibold text-purple-100 mb-4">
+                                <span className="inline-flex items-center rounded-full border border-primary-200 bg-primary-50 px-4 py-1 text-sm font-semibold text-primary-700 mb-4">
                                     {t('product_categories')}
                                 </span>
-                                <h2 className="text-3xl font-bold text-white mb-4">
+                                <h2 className="text-3xl font-bold text-primary-900 mb-4">
                                     {t('product_categories')}
                                 </h2>
-                            <p className="text-lg text-slate-300">
+                            <p className="text-lg text-secondary-700">
                                 {t('product_categories_subtitle')}
                             </p>
                             </div>
@@ -189,7 +189,7 @@ export default function Home({ categories, featuredProducts, featuredStores = []
                             <div className="text-center mt-8">
                                 <Link 
                                     href="/categories" 
-                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-purple-500 px-6 py-3 text-white font-semibold shadow-xl shadow-purple-900/40 hover:bg-purple-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400"
+                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 hover:bg-primary-700 px-6 py-3 text-white font-semibold shadow-xl shadow-primary-500/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 transition-colors"
                                 >
                                     <span>{t('view_all_categories')}</span>
                                 </Link>
@@ -200,16 +200,16 @@ export default function Home({ categories, featuredProducts, featuredStores = []
 
                 {/* Featured Products Section */}
                 {featuredProducts && featuredProducts.length > 0 && (
-                    <section className="py-16 bg-slate-950 text-slate-100">
+                    <section className="py-16 bg-white">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="text-center mb-12 max-w-3xl mx-auto">
-                                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-1 text-sm font-semibold text-purple-100 mb-4">
+                                <span className="inline-flex items-center rounded-full border border-primary-200 bg-primary-50 px-4 py-1 text-sm font-semibold text-primary-700 mb-4">
                                     {t('featured_products')}
                                 </span>
-                                <h2 className="text-3xl font-bold text-white mb-4">
+                                <h2 className="text-3xl font-bold text-primary-900 mb-4">
                                     {t('featured_products')}
                                 </h2>
-                            <p className="text-lg text-slate-300">
+                            <p className="text-lg text-secondary-700">
                                 {t('featured_products_subtitle')}
                             </p>
                             </div>
@@ -223,7 +223,7 @@ export default function Home({ categories, featuredProducts, featuredStores = []
                             <div className="text-center mt-8">
                                 <Link 
                                     href="/products" 
-                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-purple-500 px-6 py-3 text-white font-semibold shadow-xl shadow-purple-900/40 hover:bg-purple-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400"
+                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 hover:bg-primary-700 px-6 py-3 text-white font-semibold shadow-xl shadow-primary-500/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 transition-colors"
                                 >
                                     <span>{t('view_all_products')}</span>
                                 </Link>
@@ -234,16 +234,16 @@ export default function Home({ categories, featuredProducts, featuredStores = []
 
                 {/* Featured Stores Section */}
                 {featuredStores && featuredStores.length > 0 && (
-                    <section className="py-16 bg-slate-900 text-slate-100">
+                    <section className="py-16 bg-secondary-50">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="text-center mb-12 max-w-3xl mx-auto">
-                                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-1 text-sm font-semibold text-purple-100 mb-4">
+                                <span className="inline-flex items-center rounded-full border border-primary-200 bg-primary-50 px-4 py-1 text-sm font-semibold text-primary-700 mb-4">
                                     {t('featured_stores')}
                                 </span>
-                                <h2 className="text-3xl font-bold text-white mb-4">
+                                <h2 className="text-3xl font-bold text-primary-900 mb-4">
                                     {t('featured_stores')}
                                 </h2>
-                            <p className="text-lg text-slate-300">
+                            <p className="text-lg text-secondary-700">
                                 {t('featured_stores_subtitle')}
                             </p>
                             </div>
@@ -261,7 +261,7 @@ export default function Home({ categories, featuredProducts, featuredStores = []
                             <div className="text-center mt-8">
                                 <Link 
                                     href="/stores" 
-                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-purple-500 px-6 py-3 text-white font-semibold shadow-xl shadow-purple-900/40 hover:bg-purple-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400"
+                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 hover:bg-primary-700 px-6 py-3 text-white font-semibold shadow-xl shadow-primary-500/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 transition-colors"
                                 >
                                     <span>{t('view_all_stores')}</span>
                                 </Link>
