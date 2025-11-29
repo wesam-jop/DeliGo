@@ -29,6 +29,7 @@ export default function Home({ categories, featuredProducts, featuredStores = []
     const { t, locale } = useTranslation();
     const { props } = usePage();
     const settings = props?.settings || {};
+    const isRTL = locale === 'ar';
     
     // دوال إدارة السلة
     const addToCart = (productId) => {
@@ -113,7 +114,7 @@ export default function Home({ categories, featuredProducts, featuredStores = []
                                 <p className="text-xl md:text-2xl text-white/90">
                                     {t('welcome_subtitle')}
                                 </p>
-                                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 md:justify-start justify-center">
+                                <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 justify-center ${isRTL ? 'md:justify-end' : 'md:justify-start'}`}>
                                     <Link 
                                         href="/products" 
                                         className="flex items-center justify-center gap-2 bg-white text-primary-600 px-6 sm:px-8 py-3 rounded-full font-semibold hover:bg-secondary-50 transition-all text-center shadow-xl shadow-primary-900/40 hover:scale-105"
