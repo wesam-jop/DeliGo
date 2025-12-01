@@ -149,20 +149,18 @@ export default function Home({ categories, featuredProducts, featuredStores = []
                 <section className="relative py-24 bg-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         {/* Header */}
-                        <div className={`flex flex-col ${isRTL ? 'md:flex-row-reverse' : 'md:flex-row'} items-center justify-between mb-16 gap-8`}>
-                            <div className="flex-1 text-center md:text-start">
-                                <div className="inline-block mb-4">
-                                    <span className="inline-flex items-center rounded-full border border-primary-200 bg-primary-50 px-4 py-1 text-sm font-semibold text-primary-700 mb-4">
-                                        {t('why_choose_us')}
-                                    </span>
-                                </div>
-                                <h2 className="text-5xl md:text-6xl font-black text-gray-900 mb-4 leading-tight">
+                        <div className="text-center mb-16 max-w-4xl mx-auto">
+                            <div className="inline-flex items-center gap-2 mb-6">
+                                <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary-500"></div>
+                                <span className="text-sm font-semibold uppercase tracking-wider text-primary-600 bg-primary-50 px-4 py-1.5 rounded-full">
                                     {t('why_choose_us')}
-                                </h2>
-                                <p className="text-xl text-gray-600 max-w-2xl">
-                                    {t('why_choose_subtitle')}
-                                </p>
+                                </span>
+                                <div className="h-px w-12 bg-gradient-to-l from-transparent to-primary-500"></div>
                             </div>
+                            
+                            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed text-center">
+                                {t('why_choose_subtitle')}
+                            </p>
                         </div>
                         
                         {/* Features Grid - Asymmetric Layout */}
@@ -233,16 +231,18 @@ export default function Home({ categories, featuredProducts, featuredStores = []
                 {categories && categories.length > 0 && (
                     <section className="py-16 bg-secondary-50">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="text-center mb-12 max-w-3xl mx-auto">
-                                <span className="inline-flex items-center rounded-full border border-primary-200 bg-primary-50 px-4 py-1 text-sm font-semibold text-primary-700 mb-4">
-                                    {t('product_categories')}
-                                </span>
-                                <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                                    {t('product_categories')}
-                                </h2>
-                            <p className="text-lg text-secondary-700">
-                                {t('product_categories_subtitle')}
-                            </p>
+                            <div className="text-center mb-12 max-w-4xl mx-auto">
+                                <div className="inline-flex items-center gap-2 mb-6">
+                                    <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary-500"></div>
+                                    <span className="text-sm font-semibold uppercase tracking-wider text-primary-600 bg-primary-50 px-4 py-1.5 rounded-full">
+                                        {t('product_categories')}
+                                    </span>
+                                    <div className="h-px w-12 bg-gradient-to-l from-transparent to-primary-500"></div>
+                                </div>
+                                
+                                <p className="text-lg md:text-xl text-secondary-700 max-w-2xl mx-auto leading-relaxed text-center">
+                                    {t('product_categories_subtitle')}
+                                </p>
                             </div>
                             
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 sm:gap-6">
@@ -267,16 +267,18 @@ export default function Home({ categories, featuredProducts, featuredStores = []
                 {featuredProducts && featuredProducts.length > 0 && (
                     <section className="py-16 bg-white">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="text-center mb-12 max-w-3xl mx-auto">
-                            <span className="inline-flex items-center rounded-full border border-primary-200 bg-primary-50 px-4 py-1 text-sm font-semibold text-primary-700 mb-4">
-                                {t('featured_products')}
-                            </span>
-                            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                                {t('featured_products')}
-                            </h2>
-                            <p className="text-lg text-gray-600">
-                                {t('featured_products_subtitle')}
-                            </p>
+                            <div className="text-center mb-12 max-w-4xl mx-auto">
+                                <div className="inline-flex items-center gap-2 mb-6">
+                                    <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary-500"></div>
+                                    <span className="text-sm font-semibold uppercase tracking-wider text-primary-600 bg-primary-50 px-4 py-1.5 rounded-full">
+                                        {t('featured_products')}
+                                    </span>
+                                    <div className="h-px w-12 bg-gradient-to-l from-transparent to-primary-500"></div>
+                                </div>
+                                
+                                <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed text-center">
+                                    {t('featured_products_subtitle')}
+                                </p>
                             </div>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -301,16 +303,18 @@ export default function Home({ categories, featuredProducts, featuredStores = []
                 {featuredStores && featuredStores.length > 0 && (
                     <section className="py-16 bg-secondary-50">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="text-center mb-12 max-w-3xl mx-auto">
-                                <span className="inline-flex items-center rounded-full border border-primary-200 bg-primary-50 px-4 py-1 text-sm font-semibold text-primary-700 mb-4">
-                                    {t('featured_stores')}
-                                </span>
-                                <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                                    {t('featured_stores')}
-                                </h2>
-                            <p className="text-lg text-secondary-700">
-                                {t('featured_stores_subtitle')}
-                            </p>
+                            <div className="text-center mb-12 max-w-4xl mx-auto">
+                                <div className="inline-flex items-center gap-2 mb-6">
+                                    <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary-500"></div>
+                                    <span className="text-sm font-semibold uppercase tracking-wider text-primary-600 bg-primary-50 px-4 py-1.5 rounded-full">
+                                        {t('featured_stores')}
+                                    </span>
+                                    <div className="h-px w-12 bg-gradient-to-l from-transparent to-primary-500"></div>
+                                </div>
+                                
+                                <p className="text-lg md:text-xl text-secondary-700 max-w-2xl mx-auto leading-relaxed text-center">
+                                    {t('featured_stores_subtitle')}
+                                </p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
