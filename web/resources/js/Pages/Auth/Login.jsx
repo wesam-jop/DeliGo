@@ -46,8 +46,8 @@ export default function Login() {
                 {/* Left Side - Branding */}
                 <div className={`hidden lg:flex justify-center lg:w-1/2 relative overflow-hidden ${isRTL ? 'bg-gradient-to-l from-amber-50 via-orange-50 to-white' : 'bg-gradient-to-r from-amber-50 via-orange-50 to-white'} ${isRTL ? 'order-2' : ''}`}>
                     {/* Content */}
-                    <div className="relative z-10 flex flex-col justify-center items-center h-full p-12 text-slate-800">
-                        <div className="w-full max-w-md mx-auto text-center space-y-8">
+                    <div className="relative z-10 flex flex-col justify-center items-center h-full p-12 text-slate-800 w-full">
+                        <div className="w-full max-w-lg mx-auto text-center space-y-8">
                             <div className="flex justify-center">
                                 <div className="p-6 rounded-3xl bg-white/90 backdrop-blur-md border border-amber-200/50 shadow-2xl hover:scale-105 transition-transform duration-300">
                                     <DeliGoLogo height={64} className="mx-auto" />
@@ -91,7 +91,7 @@ export default function Login() {
 
                 {/* Right Side - Form */}
                 <div className={`w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-slate-50 via-white to-slate-50 relative ${isRTL ? 'order-1' : ''}`}>
-                    <div className="w-full max-w-md">
+                    <div className="w-full max-w-lg">
                         {/* Mobile Logo */}
                         <div className="lg:hidden flex justify-center mb-8">
                             <div className="p-4 rounded-2xl bg-white shadow-lg border border-slate-200">
