@@ -29,8 +29,9 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboard({ stats, recent_orders, top_products }) {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const { formatCurrency, formatDate, formatTime } = useGeneralSettings();
+    const isRTL = locale === 'ar';
 
     const orderStatusStyles = {
         pending: { label: t('pending'), badge: 'bg-warning-100 text-warning-700' },
@@ -282,7 +283,7 @@ export default function AdminDashboard({ stats, recent_orders, top_products }) {
                                                 <p className="text-sm text-slate-500">{order.user?.name}</p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
+                                        <div className={isRTL ? 'text-left' : 'text-right'}>
                                             <p className="font-medium text-slate-900">
                                                 {formatCurrency(order.total_amount ?? order.total ?? 0)}
                                             </p>
@@ -333,7 +334,7 @@ export default function AdminDashboard({ stats, recent_orders, top_products }) {
                                                 <p className="text-sm text-slate-500">{product.category?.name}</p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
+                                        <div className={isRTL ? 'text-left' : 'text-right'}>
                                             <p className="font-medium text-slate-900">
                                                 {formatCurrency(product.price)}
                                             </p>
