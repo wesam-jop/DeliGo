@@ -48,9 +48,10 @@ import DeliGoLogo from '../../Components/DeliGoLogo';
 
 export default function AdminLayout({ children, title = "Admin Dashboard" }) {
     const { props, url } = usePage();
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const auth = props?.auth || {};
     const user = auth?.user;
+    const isRTL = locale === 'ar';
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -435,11 +436,11 @@ export default function AdminLayout({ children, title = "Admin Dashboard" }) {
                             {/* Search */}
                             <div className="hidden md:block">
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                    <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4`} />
                                     <input
                                         type="text"
                                         placeholder={t('search')}
-                                        className={`w-64 pl-10 pr-4 py-2 rounded-lg text-sm transition-all duration-200 border ${
+                                        className={`w-64 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 rounded-lg text-sm transition-all duration-200 border ${
                                             isDarkMode 
                                                 ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:ring-purple-500 focus:border-purple-500' 
                                                 : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-500 focus:ring-purple-500 focus:border-purple-500'
@@ -610,7 +611,7 @@ export default function AdminLayout({ children, title = "Admin Dashboard" }) {
                                     }`}
                                 >
                                     <UserAvatar user={user} size={36} className="flex-shrink-0" />
-                                    <div className="hidden md:block text-left">
+                                    <div className={`hidden md:block ${isRTL ? 'text-right' : 'text-left'}`}>
                                         <p className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
                                             {user?.name || t('admin_user') || 'Admin User'}
                                         </p>

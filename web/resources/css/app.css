@@ -342,6 +342,12 @@
     --tw-space-x-reverse: 1;
 }
 
+/* Admin Layout - Preserve space-x direction */
+[dir="rtl"] .admin-sidebar [class*="space-x-"] > :not([hidden]) ~ :not([hidden]),
+[dir="rtl"] .admin-main-content [class*="space-x-"] > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-x-reverse: 0;
+}
+
 /* RTL Text Alignment - فقط للعناصر النصية، ليس للعناصر التي تحتوي flex أو grid */
 /* Force text-center to always be centered, even in RTL */
 [dir="rtl"] .text-center,
@@ -390,6 +396,23 @@
 .dashboard-sidebar nav .flex,
 .dashboard-header .flex,
 .dashboard-content .flex {
+    flex-direction: row !important;
+}
+
+/* Admin Layout - Preserve flex direction for proper layout */
+[dir="rtl"] .admin-sidebar .flex,
+[dir="rtl"] .admin-sidebar nav .flex,
+[dir="rtl"] .admin-main-content .flex,
+[dir="rtl"] .admin-main-content header .flex,
+[dir="rtl"] .admin-main-content main .flex {
+    flex-direction: row !important;
+}
+
+[dir="ltr"] .admin-sidebar .flex,
+[dir="ltr"] .admin-sidebar nav .flex,
+[dir="ltr"] .admin-main-content .flex,
+[dir="ltr"] .admin-main-content header .flex,
+[dir="ltr"] .admin-main-content main .flex {
     flex-direction: row !important;
 }
 
@@ -547,6 +570,23 @@ body[dir="ltr"] {
     border-left: 1px solid !important;
 }
 
+/* RTL Border Width Support */
+[dir="rtl"] .border-l-2 {
+    border-left-width: 0 !important;
+    border-right-width: 0.125rem !important;
+}
+
+[dir="rtl"] .border-r-2 {
+    border-right-width: 0 !important;
+    border-left-width: 0.125rem !important;
+}
+
+/* Admin Layout - Preserve border-r for active submenu (should be on left in RTL) */
+[dir="rtl"] .admin-sidebar .border-r-2 {
+    border-right-width: 0 !important;
+    border-left-width: 0.125rem !important;
+}
+
 /* RTL Shadow Support */
 [dir="rtl"] .shadow-lg {
     box-shadow: -10px 10px 15px -3px rgba(0, 0, 0, 0.1), -4px 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
@@ -629,6 +669,17 @@ body.ltr {
 [dir="rtl"] .admin-sidebar.left-0 {
     left: auto !important;
     right: 0 !important;
+}
+
+/* Admin Layout - Preserve dropdown positioning (align to button edge) */
+[dir="rtl"] .admin-main-content .absolute.right-0 {
+    right: 0 !important;
+    left: auto !important;
+}
+
+[dir="ltr"] .admin-main-content .absolute.right-0 {
+    right: 0 !important;
+    left: auto !important;
 }
 
 /* Customer Layout RTL Support - Sidebar positioning */
